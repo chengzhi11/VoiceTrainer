@@ -1,0 +1,11 @@
+# 本地私有产物与内部文件,不入公开仓库(开源审核结论)
+dist/
+docs/
+assets/say_*
+delivery_report.md
+description.md
+CLAUDE.md
+.multica/
+.agent_context/
+.claude/
+.DS_Store

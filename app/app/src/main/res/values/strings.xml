@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">女声训练</string>
+    <string name="recording_title">录音</string>
+    <string name="history_title">历史记录</string>
+    <string name="start_recording">开始录音</string>
+    <string name="stop_recording">停止录音</string>
+    <string name="play_recording">播放录音</string>
+    <string name="delete_recording">删除录音</string>
+    <string name="frequency_label">基频 (F0)</string>
+    <string name="score_label">女声化评分</string>
+    <string name="duration_label">时长</string>
+    <string name="date_label">日期</string>
+    <string name="empty_history">暂无录音记录</string>
+    <string name="permission_required">需要录音权限</string>
+    <string name="permission_denied">录音权限被拒绝，请在设置中开启</string>
+    <string name="grant_permission">授予权限</string>
+    <string name="recording_saved">录音已保存</string>
+    <string name="recording_deleted">录音已删除</string>
+    <string name="error_recording">录音失败</string>
+    <string name="error_playing">播放失败</string>
+    <string name="high_feminization">高度女声化</string>
+    <string name="moderate_feminization">中等女声化</string>
+    <string name="low_feminization">低度女声化</string>
+    <string name="very_low_feminization">极低女声化</string>
+    <string name="hz_unit">Hz</string>
+    <string name="score_unit">分</string>
+    <string name="total_score">总分</string>
+    <string name="feminization_details">女声化详情</string>
+</resources>

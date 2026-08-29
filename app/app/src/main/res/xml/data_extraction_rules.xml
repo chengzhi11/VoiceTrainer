@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- Exclude database and audio files from cloud backup -->
+        <exclude domain="database" path="feminine_voice_database" />
+        <exclude domain="file" path="recordings" />
+    </cloud-backup>
+
+    <device-transfer>
+        <!-- Include all data for device transfer -->
+        <include domain="sharedpref" path="." />
+        <include domain="database" path="feminine_voice_database" />
+        <include domain="file" path="recordings" />
+    </device-transfer>
+</data-extraction-rules>
