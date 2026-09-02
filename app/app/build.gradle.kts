@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -24,7 +26,7 @@ android {
     // 发布签名:从 git 排除的 keystore/keystore.properties 注入(口令不入库);
     // 文件缺失(如开源用户克隆)时降级为无签名配置,release 产出未签名 APK,不影响 debug 构建
     val keystorePropertiesFile = rootProject.file("../keystore/keystore.properties")
-    val keystoreProperties = java.util.Properties()
+    val keystoreProperties = Properties()
     if (keystorePropertiesFile.exists()) {
         keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
     }
