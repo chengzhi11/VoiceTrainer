@@ -19,10 +19,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.femininevoicetrainer.R
 import com.femininevoicetrainer.audio.VoiceEvaluator
 import com.femininevoicetrainer.audio.VoiceFeatureExtractor
 import com.femininevoicetrainer.audio.VoiceTypeThresholds
@@ -41,7 +43,11 @@ fun MainScreenContent(
     uiState: MainViewModel.UiState
 ) {
     val selectedTab = remember { mutableStateOf(0) }
-    val tabs = listOf("录音", "历史记录")
+    val tabs = listOf(
+        stringResource(R.string.recording_title),
+        stringResource(R.string.training_title),
+        stringResource(R.string.history_title)
+    )
 
     Scaffold(
         topBar = {
@@ -63,6 +69,7 @@ fun MainScreenContent(
                             Icon(
                                 imageVector = when (index) {
                                     0 -> Icons.Default.Mic
+                                    1 -> Icons.Default.School
                                     else -> Icons.Default.History
                                 },
                                 contentDescription = title
@@ -77,7 +84,8 @@ fun MainScreenContent(
         Box(modifier = Modifier.padding(paddingValues)) {
             when (selectedTab.value) {
                 0 -> RecordingScreen(viewModel = viewModel, uiState = uiState)
-                1 -> HistoryScreen(viewModel = viewModel, uiState = uiState)
+                1 -> TrainingScreen(onGoRecord = { selectedTab.value = 0 })
+                2 -> HistoryScreen(viewModel = viewModel, uiState = uiState)
             }
         }
     }

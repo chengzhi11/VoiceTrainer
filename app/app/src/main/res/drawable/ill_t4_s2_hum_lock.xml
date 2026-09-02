@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- T4-2 哼鸣锁定图解(自制,无内嵌文字):左=主角闭口哼鸣(音符+唇部波纹);右=屏幕内实时 F0 曲线贴合目标带。
+     配文见 strings.xml:training_illus_t4_s2_desc -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="160dp"
+    android:viewportWidth="240"
+    android:viewportHeight="160">
+
+    <!-- 左:哼鸣主角 -->
+    <path
+        android:fillColor="#F8BBD0"
+        android:pathData="M22,80 a30,30 0 1,0 60,0 a30,30 0 1,0 -60,0 z" />
+    <!-- 闭眼(哼鸣享受状) -->
+    <path
+        android:pathData="M38,72 q5,-6 10,0 M56,72 q5,-6 10,0"
+        android:strokeColor="#4A148C"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <!-- 嘟嘴哼「嗯」 -->
+    <path
+        android:fillColor="#EC407A"
+        android:pathData="M46,90 a7,8 0 1,0 14,0 a7,8 0 1,0 -14,0 z" />
+    <!-- 唇部波纹 -->
+    <path
+        android:pathData="M66,84 a12,12 0 0,1 0,16 M74,78 a20,20 0 0,1 0,28"
+        android:strokeColor="#7E57C2"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <!-- 音符 1 -->
+    <path
+        android:fillColor="#7E57C2"
+        android:pathData="M18,44 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0 z" />
+    <path
+        android:pathData="M27,44 v-14 l7,-3 v7"
+        android:strokeColor="#7E57C2"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <!-- 音符 2 -->
+    <path
+        android:fillColor="#EC407A"
+        android:pathData="M84,32 a3.5,3.5 0 1,0 7,0 a3.5,3.5 0 1,0 -7,0 z" />
+    <path
+        android:pathData="M91,32 v-11 l6,-2 v5"
+        android:strokeColor="#EC407A"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+
+    <!-- 右:实时曲线屏幕 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#B0BEC5"
+        android:strokeWidth="2.5"
+        android:pathData="M112,28 h108 a10,10 0 0,1 10,10 v84 a10,10 0 0,1 -10,10 h-108 a10,10 0 0,1 -10,-10 v-84 a10,10 0 0,1 10,-10 z" />
+    <!-- 目标带(半透明粉) -->
+    <path
+        android:fillColor="#66F06292"
+        android:pathData="M110,64 h112 v24 h-112 z" />
+    <path
+        android:pathData="M110,64 h112 M110,88 h112"
+        android:strokeColor="#F06292"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <!-- F0 曲线(贴合目标带) -->
+    <path
+        android:pathData="M110,76 C122,68 130,84 142,74 C152,66 160,86 172,74 C182,64 190,86 202,74 C208,68 214,78 224,74"
+        android:strokeColor="#7E57C2"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+</vector>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- T5-2 前部聚焦图解(自制,无内嵌文字):正面面部,唇齿区波纹亮起(粉/紫);下方胸腔灰暗(不再去胸腔找响)。
+     配文见 strings.xml:training_illus_t5_s2_desc -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="160dp"
+    android:viewportWidth="240"
+    android:viewportHeight="160">
+
+    <!-- 面部(正面) -->
+    <path
+        android:fillColor="#F8BBD0"
+        android:pathData="M46,64 a34,34 0 1,0 68,0 a34,34 0 1,0 -68,0 z" />
+    <path
+        android:fillColor="#4A148C"
+        android:pathData="M68,56 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 z" />
+    <path
+        android:fillColor="#4A148C"
+        android:pathData="M86,56 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 z" />
+    <path
+        android:pathData="M70,74 Q80,80 90,74"
+        android:strokeColor="#880E4F"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+
+    <!-- 唇齿区(亮,粉) -->
+    <path
+        android:fillColor="#EC407A"
+        android:pathData="M72,78 a10,6 0 1,0 20,0 a10,6 0 1,0 -20,0 z" />
+    <!-- 唇齿向外辐射的波纹(紫,亮) -->
+    <path
+        android:pathData="M96,68 a16,16 0 0,1 0,20"
+        android:strokeColor="#7E57C2"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M104,60 a26,26 0 0,1 0,36"
+        android:strokeColor="#7E57C2"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M112,50 a38,38 0 0,1 0,56"
+        android:strokeColor="#7E57C2"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <!-- 上方波纹(也亮) -->
+    <path
+        android:pathData="M70,46 q10,-8 20,0"
+        android:strokeColor="#EC407A"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+
+    <!-- 下方躯干(胸腔,暗灰) -->
+    <path
+        android:fillColor="#9E9E9E"
+        android:pathData="M52,104 h56 a16,14 0 0,1 16,14 v26 a14,12 0 0,1 -14,12 h-60 a14,12 0 0,1 -14,-12 v-26 a16,14 0 0,1 16,-14 z" />
+    <!-- 胸腔「静音」:两道暗横线 -->
+    <path
+        android:pathData="M62,118 h36 M66,130 h28"
+        android:strokeColor="#616161"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+</vector>

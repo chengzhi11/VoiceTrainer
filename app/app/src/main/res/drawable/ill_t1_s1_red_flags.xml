@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- T1-1 安全红线图解(自制,无内嵌文字):主角 + 四宫格红旗信号(喉咙痛/嘶哑/咳血/颈部肿块),红色禁止符号。
+     配文见 strings.xml:training_illus_t1_s1_desc -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="160dp"
+    android:viewportWidth="240"
+    android:viewportHeight="160">
+
+    <!-- 左:Q版主角(担心的表情) -->
+    <path
+        android:fillColor="#F8BBD0"
+        android:pathData="M14,80 a22,22 0 1,0 44,0 a22,22 0 1,0 -44,0 z" />
+    <path
+        android:fillColor="#4A148C"
+        android:pathData="M29,74 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0 z" />
+    <path
+        android:fillColor="#4A148C"
+        android:pathData="M41,74 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0 z" />
+    <path
+        android:pathData="M28,92 Q36,86 44,92"
+        android:strokeColor="#880E4F"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round" />
+
+    <!-- 右:四宫格红旗信号卡 -->
+    <path
+        android:fillColor="#FAFAFA"
+        android:strokeColor="#E53935"
+        android:strokeWidth="2"
+        android:pathData="M104,32 h44 a4,4 0 0,1 4,4 v44 h-48 a4,4 0 0,1 -4,-4 z" />
+    <path
+        android:fillColor="#FAFAFA"
+        android:strokeColor="#E53935"
+        android:strokeWidth="2"
+        android:pathData="M156,32 h44 a4,4 0 0,1 4,4 v44 a4,4 0 0,1 -4,4 h-44 z" />
+    <path
+        android:fillColor="#FAFAFA"
+        android:strokeColor="#E53935"
+        android:strokeWidth="2"
+        android:pathData="M100,88 a4,4 0 0,1 4,-4 h44 v44 a4,4 0 0,1 -4,4 h-40 a4,4 0 0,1 -4,-4 z" />
+    <path
+        android:fillColor="#FAFAFA"
+        android:strokeColor="#E53935"
+        android:strokeWidth="2"
+        android:pathData="M156,84 h44 a4,4 0 0,1 4,4 v40 a4,4 0 0,1 -4,4 h-44 z" />
+
+    <!-- 信号 1:喉咙痛(闪电) -->
+    <path
+        android:pathData="M132,38 L120,54 L128,54 L116,70"
+        android:strokeColor="#E53935"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <!-- 信号 2:嘶哑(断续波浪) -->
+    <path
+        android:pathData="M160,56 Q165,46 170,56 Q175,66 180,56"
+        android:strokeColor="#E53935"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M186,56 Q190,50 194,56"
+        android:strokeColor="#E53935"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round" />
+    <!-- 信号 3:咳血(血滴) -->
+    <path
+        android:fillColor="#E53935"
+        android:pathData="M126,96 C120,106 118,112 126,118 C134,112 132,106 126,96 z" />
+    <!-- 信号 4:颈部肿块(隆起) -->
+    <path
+        android:fillColor="#E53935"
+        android:pathData="M172,110 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 z" />
+    <path
+        android:pathData="M178,92 v6 M178,116 v6 M166,104 h6 M184,104 h6 M170,96 l4,4 M186,108 l4,4 M186,96 l-4,4 M170,108 l-4,4"
+        android:strokeColor="#E53935"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round" />
+
+    <!-- 红色禁止符号(环 + 斜杠) -->
+    <path
+        android:pathData="M84,74 a62,62 0 1,0 124,0 a62,62 0 1,0 -124,0 z"
+        android:strokeColor="#E53935"
+        android:strokeWidth="6"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M102,118 L190,30"
+        android:strokeColor="#E53935"
+        android:strokeWidth="6"
+        android:strokeLineCap="round" />
+</vector>

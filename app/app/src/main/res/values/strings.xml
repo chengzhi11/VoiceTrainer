@@ -27,4 +27,179 @@
     <string name="score_unit">分</string>
     <string name="total_score">总分</string>
     <string name="feminization_details">女声化详情</string>
+
+    <!-- ==================== 训练模块(GH#3 / COD-54)==================== -->
+    <!-- 通用 -->
+    <string name="training_title">训练</string>
+    <string name="training_goal_label">目标</string>
+    <string name="training_focus_label">要领</string>
+    <string name="training_mistakes_label">常见错误</string>
+    <string name="training_check_label">自检</string>
+    <string name="training_steps_count">共 %1$d 步</string>
+    <string name="training_back">返回主题列表</string>
+
+    <!-- 非医疗免责声明(训练 tab 首进展示) -->
+    <string name="training_disclaimer_title">开始前请阅读</string>
+    <string name="training_disclaimer_body">本应用提供发声练习参考信息,不构成医疗建议、诊断或治疗。嗓音训练如出现持续不适,请就医(警示信号见「嗓音安全与卫生」主题)。\n\n建议节奏:单次练习 10–15 分钟、每天不超过 2 次,短时多次优于一次猛练。</string>
+    <string name="training_disclaimer_accept">我已阅读并理解</string>
+
+    <!-- 红旗自检横幅(训练首页常驻) -->
+    <string name="training_redflag_title">红旗信号:任一出现,今天不练,先就医</string>
+    <string name="training_redflag_body">发声疼痛 · 突发嘶哑或失声 · 咳血 · 吞咽痛或困难 · 颈部肿块 · 呼吸困难。疼痛不是练习的正常部分。</string>
+
+    <!-- 练习时长提示 -->
+    <string name="training_duration_hint">单次 10–15 分钟,每天 ≤2 次;短时多次,比一次猛练更有效。</string>
+
+    <!-- 自测联动 -->
+    <string name="training_go_selftest">去自测(跳到录音)</string>
+    <string name="training_selftest_hint">自测建议:读完固定语料后长按录音录一条;进步看周均,不看单条。</string>
+
+    <!-- 固定朗读自测语料(冻结:2026-09-02,覆盖 /a/ /i/ /u/ 高低元音) -->
+    <string name="training_corpus_title">固定朗读自测语料(3 句)</string>
+    <string name="training_corpus_1">今天天气真好,我们一起出门走走吧。</string>
+    <string name="training_corpus_2">西湖的乌篷船慢慢划过水面。</string>
+    <string name="training_corpus_3">妹妹喜欢读书,也喜欢画图画。</string>
+    <string name="training_corpus_note">朗读自测请固定用这 3 句(覆盖 /a/ /i/ /u/ 高低元音,保证历史曲线可比);正常语速连读约 10 秒。</string>
+
+    <!-- P0 图解 contentDescription -->
+    <string name="training_illus_t1_s1_desc">红旗警示图:喉咙痛、嘶哑、咳血、颈部肿块等信号出现时停止练习</string>
+    <string name="training_illus_t2_s1_desc">腹式呼吸示意图:吸气腹部鼓起、呼气回落,肩部保持不动</string>
+    <string name="training_illus_t4_s1_desc">音高标尺图:习惯音高在低位,目标区间 165–220 赫兹在中高段</string>
+    <string name="training_illus_t4_s2_desc">哼鸣锁定图:哼鸣持音,实时曲线贴合目标带</string>
+    <string name="training_illus_t5_s1_desc">喉位对比图:哈欠时喉位下移腔体大,吞咽时喉位上移腔体小</string>
+    <string name="training_illus_t5_s2_desc">前部聚焦图:振动集中在唇齿区域,胸腔不再用力找响</string>
+    <string name="training_illus_t5_s4_desc">音高与共鸣双通道图:两线一起上升才对,只升音高会错位</string>
+    <string name="training_illus_placeholder">图解制作中,将在后续版本补充</string>
+
+    <!-- T1 嗓音安全与卫生 -->
+    <string name="training_t1_title">T1 · 嗓音安全与卫生</string>
+    <string name="training_t1_goal">建立安全边界;识别必须停练/就医的信号;养成护嗓习惯。先读后练,全程有效。</string>
+    <string name="training_t1_s1_title">练前红线自检(30 秒)</string>
+    <string name="training_t1_s1_focus">每次开练前确认:发声疼痛?突发嘶哑?咳血?吞咽痛或困难?颈部肿块?呼吸困难?——任一命中,当天不练并就医评估。疼痛从来不是练习的正常部分。</string>
+    <string name="training_t1_s1_mistakes">把痛当「练到位了」;带病硬练。</string>
+    <string name="training_t1_s1_check">命中任何一条红旗信号:立即停止练习,当天不再训练,尽快就医评估。</string>
+    <string name="training_t1_s2_title">嗓音卫生习惯</string>
+    <string name="training_t1_s2_focus">足量饮水,含咖啡因/酒精的饮品利尿,需额外补水;想清嗓时改干咽或小口温水;不喊叫也不耳语;嘈杂环境离麦克风近一点;生病/疲劳日减量;辛辣晚食控反流;保证睡眠。</string>
+    <string name="training_t1_s2_mistakes">用耳语「省嗓」(其实更费嗓);频繁清嗓;熬夜后猛练。</string>
+    <string name="training_t1_s2_check">习惯自问:今天水喝够了吗?清嗓忍住了吗?疲劳时减量了吗?</string>
+    <string name="training_t1_s3_title">剂量纪律</string>
+    <string name="training_t1_s3_focus">单次练习 10–15 分钟,每天最多 2 次;短时多次优于一次长练;感觉「费劲」「挤压」就停,休息后再来。</string>
+    <string name="training_t1_s3_mistakes">周末一次性补 1 小时「课」;练到痛、练到哑。</string>
+    <string name="training_t1_s3_check">用手机计时:单次不超过 15 分钟;两次练习之间留出休息间隔。</string>
+
+    <!-- T2 热身(SOVT) -->
+    <string name="training_t2_title">T2 · 热身(SOVT)</string>
+    <string name="training_t2_goal">降低发声门槛压,用最省力的方式启动发声;为提音高做安全铺垫。每次训练的第一个动作。</string>
+    <string name="training_t2_s1_title">腹式呼吸启动</string>
+    <string name="training_t2_s1_focus">坐直或仰卧,一手放腹部:鼻吸时腹部鼓起、口呼时回落,肩胸保持不动(腹胸式而非锁骨式),上身放松,共 8 轮。</string>
+    <string name="training_t2_s1_mistakes">抬肩式深吸气;憋气硬挤。</string>
+    <string name="training_t2_s1_check">手感自检:肩不动、放在腹部的手被自然顶起,呼吸方式就对了。</string>
+    <string name="training_t2_s2_title">哼鸣</string>
+    <string name="training_t2_s2_focus">用舒适音高哼「嗯——」1 分钟 ×4 组,感受唇面部的麻震感;哼鸣是 SOVT 家族动作,随时可做。</string>
+    <string name="training_t2_s2_mistakes">哼得过响;喉部用力去找「亮」音。</string>
+    <string name="training_t2_s2_check">热身后录 /a/ 持音 5 秒:音质/平滑度子分不应低于冷嗓时的水平。</string>
+    <string name="training_t2_s3_title">吸管练习</string>
+    <string name="training_t2_s3_focus">含住普通饮用吸管(约 14 cm、4 mm 口径),全部气流过管,用舒适响度做上下滑音、「小山坡」音型 2–3 分钟。不要用咖啡搅拌细管——过窄发不出声,还诱发用力。</string>
+    <string name="training_t2_s3_mistakes">换超细吸管「加码」;追求大声;嘴唇漏气。</string>
+    <string name="training_t2_s3_check">练习全程应「越来越省力」而不是越来越累;口径同哼鸣步骤用录音验证。</string>
+    <string name="training_t2_s4_title">滑音警笛(siren)</string>
+    <string name="training_t2_s4_focus">「呜/咿」从最低舒适音滑到最高再滑回,像警笛,5–8 次;这是后续音高控制的热身版。</string>
+    <string name="training_t2_s4_mistakes">滑到顶端硬顶;带着喉部挤压感上冲。</string>
+    <string name="training_t2_s4_check">滑音应顺畅、无「卡顿跳变」(对应评分中的平滑度直觉)。</string>
+
+    <!-- T3 气息支撑 -->
+    <string name="training_t3_title">T3 · 气息支撑</string>
+    <string name="training_t3_goal">为更高目标音高提供稳定气压;建立「用气压上高音」而不是「用挤压上高音」的动作模式。</string>
+    <string name="training_t3_s1_title">呼气均匀控制</string>
+    <string name="training_t3_s1_focus">用腹式呼吸的姿势吸满,发细而稳的「丝——」嘶音呼气 8–10 秒,气流均匀不断续;进步目标 12–15 秒。</string>
+    <string name="training_t3_s1_mistakes">一口气猛喷;胸肩先塌。</string>
+    <string name="training_t3_s1_check">计时:嘶音的时长与稳定性,目标每次都能到 8 秒以上。</string>
+    <string name="training_t3_s2_title">气息到发声的转接</string>
+    <string name="training_t3_s2_focus">「丝——」到一半平滑转成 /u/ 元音(嘶音转浊音),转换点无卡顿、无硬磕。</string>
+    <string name="training_t3_s2_mistakes">转接瞬间憋气再「蹦」出声。</string>
+    <string name="training_t3_s2_check">录音回听转接点;看 App 平滑度/音质子分。</string>
+    <string name="training_t3_s3_title">数数配气</string>
+    <string name="training_t3_s3_focus">一口气从 1 数到 10(进阶到 15),音量恒定、不抢不拖,数完还有余气。</string>
+    <string name="training_t3_s3_mistakes">数到最后气尽音塌、音高下滑。</string>
+    <string name="training_t3_s3_check">每次录音:最后 3 个数的音高是否明显下滑(看 App 实时 F0 曲线)。</string>
+    <string name="training_t3_s4_title">气压上高音</string>
+    <string name="training_t3_s4_focus">用吸管滑音进入目标音高区(165–220 Hz)并停住 3–5 秒,体会「气送上去」;移开吸管直接发同音高元音,保持同样的省力感。</string>
+    <string name="training_t3_s4_mistakes">移开吸管后立刻改回「挤」上去;音量猛增。</string>
+    <string name="training_t3_s4_check">给目标音高持音的省力感打主观分(1–5);结合 T4 的自测读数。</string>
+
+    <!-- T4 音高控制 -->
+    <string name="training_t4_title">T4 · 音高控制(核心)</string>
+    <string name="training_t4_goal">把自然语声 F0 从习惯位(多为 100–150 Hz)迁入并稳定在 165–220 Hz 区间(推荐 ≥180;不必追 250+)。</string>
+    <string name="training_t4_s1_title">测习惯音高</string>
+    <string name="training_t4_s1_focus">先做 T2 热身,再用 App 录固定朗读语料,看 f0P50(有声帧 F0 中位数);连测 3 次取中位数,这就是你的起点。</string>
+    <string name="training_t4_s1_mistakes">冷嗓第一句就测;用喊叫拉高读数。</string>
+    <string name="training_t4_s1_check">App 音高子分与 f0P50 记入历史曲线,作为起点基线。</string>
+    <string name="training_t4_s2_title">定目标区间</string>
+    <string name="training_t4_s2_focus">在起点上方 2–4 个半音、且落在 165–200 Hz 内定目标;分周爬升,每周不超过 +2 半音;目标带对应 App 实时曲线的 165–220 高亮区。</string>
+    <string name="training_t4_s2_mistakes">一步到位追 220+;把「能哼到的最高音」当目标(自然说话≠最高音)。</string>
+    <string name="training_t4_s2_check">朗读语料的 f0P50 进入目标带,且连续 3 天稳定。</string>
+    <string name="training_t4_s3_title">哼鸣锁定</string>
+    <string name="training_t4_s3_focus">哼「嗯——」滑入目标音停 5 秒,配合 App 实时 F0 曲线校准耳朵,记住这个音高感;日常对话中用「嗯哼」重置音随时找回。</string>
+    <string name="training_t4_s3_mistakes">只靠录完回听才知道准不准(要盯实时曲线建立内在校准)。</string>
+    <string name="training_t4_s3_check">持音 5 秒内 F0 偏离不超过 ±10%(实时曲线目测)。</string>
+    <string name="training_t4_s4_title">数字/星期音阶</string>
+    <string name="training_t4_s4_focus">从目标音高起,「5-4-3-2-1」数字下行吟诵(每个数字落一档音高),再「星期一→星期日」上行吟诵;/m/ 起音词组「嗯-一、嗯-二…」。</string>
+    <string name="training_t4_s4_mistakes">数字念成同一个音高(平的);越念越快丢失音高控制。</string>
+    <string name="training_t4_s4_check">录音看 F0 曲线呈阶梯状,而不是一条水平线。</string>
+    <string name="training_t4_s5_title">朗读迁移</string>
+    <string name="training_t4_s5_focus">短句(每句前哼一下重置)→ 4 句小段 → 段落,读完即录 App;进阶:自由说话 30 秒——自发语最难也最关键,要刻意练。</string>
+    <string name="training_t4_s5_mistakes">只练朗读不练自发语;句子越读越长,音高塌回习惯位。</string>
+    <string name="training_t4_s5_check">App 音高子分、四态结论(目标:男声区→过渡区→自然女声)、声线标签变化。</string>
+
+    <!-- T5 共鸣位置 -->
+    <string name="training_t5_title">T5 · 共鸣位置(核心)</string>
+    <string name="training_t5_goal">共振峰整体上移(文献目标 ≥20%;App 口径:共鸣特征 (F3−F1)/3 从 1750 向 2400 Hz 方向移动);与音高同步,压住 mismatch、防太监音。</string>
+    <string name="training_t5_s1_title">喉位感知:大空间→小空间</string>
+    <string name="training_t5_s1_focus">打哈欠,感受喉下沉的「大空间」;做吞咽动作,瞬间感受喉上提的「小空间」;「啊(大口)↔咿(小口)」交替,听音色明暗变化。目标:能主动小幅上提喉位并保持说话。</string>
+    <string name="training_t5_s1_mistakes">用力掐着喉咙做;持续极端提喉(疲劳/不适即还原)。</string>
+    <string name="training_t5_s1_check">「大/小空间」同句录音 A/B 对比,App 共鸣子分差值应可见。</string>
+    <string name="training_t5_s2_title">前部聚焦(口腔共鸣)</string>
+    <string name="training_t5_s2_focus">哼鸣找到唇齿麻震位置→张口保持这个振动位置说「妈妈、咪嘛」;想象声音从门牙/嘴唇出发,不去胸腔找「响」。</string>
+    <string name="training_t5_s2_mistakes">去胸腔找共鸣(方向反了);压舌根制造「细」音。</string>
+    <string name="training_t5_s2_check">唇齿震感主观分级 + App 共鸣子分趋势。</string>
+    <string name="training_t5_s3_title">唇形与口腔几何</string>
+    <string name="training_t5_s3_focus">微笑式唇横向展开(不撅不圆唇);下颌开度略小而灵活;舌整体前移、舌尖积极。机理:下颌开度增→F1 升,舌前移→F2 升,不撅唇+提喉缩短口腔→F3 升。</string>
+    <string name="training_t5_s3_mistakes">撅圆唇说话(共振峰下移,反效果);嘴角僵硬过度。</string>
+    <string name="training_t5_s3_check">同句 A/B(撅唇 vs 展唇)听感对比 + 共鸣子分。</string>
+    <string name="training_t5_s4_title">词句迁移</string>
+    <string name="training_t5_s4_focus">单字(妈/衣/乌)→双字词→短句→段落,全程保持「小空间+前聚焦+软起声」;与 T4 音高合并练(同提音高同聚焦)。</string>
+    <string name="training_t5_s4_mistakes">共鸣与音高分开练成两张皮(App 的 mismatch 就是抓这个)。</string>
+    <string name="training_t5_s4_check">App mismatch 与四态——共鸣跟上后「太监音风险」应消退;声线标签从男声→御姐→女声推进。</string>
+
+    <!-- T6 起声与咬字 -->
+    <string name="training_t6_title">T6 · 起声与咬字</string>
+    <string name="training_t6_goal">软起声代替硬起声;消除句尾气泡音;咬字精细、音量柔和。</string>
+    <string name="training_t6_s1_title">软起声</string>
+    <string name="training_t6_s1_focus">「哈啊——」气流领先的 h 带入元音,声带轻合不碰撞;再练无 h 的「啊」也保持同样的轻起;元音开头的词(安、欧、恩)逐个轻放。</string>
+    <string name="training_t6_s1_mistakes">词首元音「磕」出来(硬起声);为软而漏气成气声。</string>
+    <string name="training_t6_s1_check">录音回听词首;看 App 音质子分(HNR)趋势。</string>
+    <string name="training_t6_s2_title">防句尾塌音(气泡音)</string>
+    <string name="training_t6_s2_focus">句尾音高维持到句号,不往下掉;练「今天天气很好」,尾字「好」保持住音高再收;晨间轻哼鸣拉升当日基线。口径:气泡音不伤嗓,只是听感偏男——别怕它,也别留它。</string>
+    <string name="training_t6_s2_mistakes">每句结尾音高下坠进气泡音;害怕气泡音过度紧张。</string>
+    <string name="training_t6_s2_check">App 声线标签不应出现「气泡音」(F0≤70 Hz 判定);看实时曲线句尾。</string>
+    <string name="training_t6_s3_title">咬字精细化</string>
+    <string name="training_t6_s3_focus">轻柔清晰读绕口令(四是四十是十),舌尖轻触、字头不炸;音量整体收敛到柔和档(女性感知与柔和音量+精细咬字相关)。</string>
+    <string name="training_t6_s3_mistakes">把咬字当用力(应轻而准);刻意放大音量找「存在感」。</string>
+    <string name="training_t6_s3_check">录音回听清晰度;看 App 音质/平滑度子分。</string>
+
+    <!-- T7 语调与语速 -->
+    <string name="training_t7_title">T7 · 语调与语速</string>
+    <string name="training_t7_goal">语调曲线活跃(句尾上行、半音范围扩大);语速保持自然(刻意变速无效)。</string>
+    <string name="training_t7_s1_title">语调夸张朗读</string>
+    <string name="training_t7_s1_focus">同一句用疑问/惊喜/开心分别读,句尾明显上扬;「是吗?」「真的!」「走吧~」三个调型各 5 遍。</string>
+    <string name="training_t7_s1_mistakes">所有句子一个调(平直);只在心里起伏、嘴上平。</string>
+    <string name="training_t7_s1_check">回听调型可分辨;录音 F0 曲线可见上扬尾。</string>
+    <string name="training_t7_s2_title">半音范围扩展</string>
+    <string name="training_t7_s2_focus">「好」「嗯」「对」从平读改为大起伏读;一句话内最高与最低差拉到 5 个半音以上(被正确识别为女性的说话人半音范围更大)。</string>
+    <string name="training_t7_s2_mistakes">用音量代替音高起伏(响≠高)。</string>
+    <string name="training_t7_s2_check">App 实时曲线的波动幅度肉眼可见变大。</string>
+    <string name="training_t7_s3_title">日常迁移</string>
+    <string name="training_t7_s3_focus">每天 30 秒自由说话录音(讲今天做了什么),刻意维持目标音高+活跃语调;注意:语调练习会让 F0 波动变大,这不是「稳定性变差」,两种任务分开评价。</string>
+    <string name="training_t7_s3_mistakes">用持音任务的标准苛评自发语(反之亦然)。</string>
+    <string name="training_t7_s3_check">回听主观评分 + 长期看历史曲线总分趋势。</string>
 </resources>

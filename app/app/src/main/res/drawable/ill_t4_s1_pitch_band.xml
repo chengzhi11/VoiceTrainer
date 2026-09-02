@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- T4-1 音高标尺图解(自制,无内嵌文字):竖直标尺,习惯位在低位灰带,目标带(165–220)高亮粉带,
+     250+ 顶部红带;曲线箭头示意从习惯位迁入目标带。数值刻度不烧入图,由配文承载。
+     配文见 strings.xml:training_illus_t4_s1_desc -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="160dp"
+    android:viewportWidth="240"
+    android:viewportHeight="160">
+
+    <!-- 标尺底 -->
+    <path
+        android:fillColor="#ECEFF1"
+        android:pathData="M28,16 h18 a4,4 0 0,1 4,4 v120 a4,4 0 0,1 -4,4 h-18 a4,4 0 0,1 -4,-4 v-120 a4,4 0 0,1 4,-4 z" />
+    <!-- 刻度线 -->
+    <path
+        android:pathData="M32,16 h14 M32,48 h10 M32,92 h10 M32,104 h10 M32,144 h14"
+        android:strokeColor="#90A4AE"
+        android:strokeWidth="2"
+        android:strokeLineCap="round" />
+
+    <!-- 250+「不必追」带(顶) -->
+    <path
+        android:fillColor="#FFCDD2"
+        android:pathData="M56,16 h144 a6,6 0 0,1 6,6 v2 a6,6 0 0,1 -6,6 h-144 z" />
+    <!-- 目标带 165–220(高亮) -->
+    <path
+        android:fillColor="#F48FB1"
+        android:pathData="M56,48 h144 a6,6 0 0,1 6,6 v32 a6,6 0 0,1 -6,6 h-144 a6,6 0 0,1 -6,-6 v-32 a6,6 0 0,1 6,-6 z" />
+    <!-- 习惯带 100–150(灰) -->
+    <path
+        android:fillColor="#B0BEC5"
+        android:pathData="M56,104 h144 a6,6 0 0,1 6,6 v28 a6,6 0 0,1 -6,6 h-144 a6,6 0 0,1 -6,-6 v-28 a6,6 0 0,1 6,-6 z" />
+
+    <!-- 习惯位标记(灰点) -->
+    <path
+        android:fillColor="#546E7A"
+        android:pathData="M146,117 a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 z" />
+    <!-- 目标位标记(粉环) -->
+    <path
+        android:pathData="M146,62 a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 z"
+        android:strokeColor="#EC407A"
+        android:strokeWidth="4"
+        android:fillColor="#00000000" />
+
+    <!-- 迁移箭头:从习惯位到目标带 -->
+    <path
+        android:pathData="M108,124 C88,110 88,82 108,68"
+        android:strokeColor="#EC407A"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M108,68 l-10,-1 l6,9 z"
+        android:fillColor="#EC407A" />
+</vector>

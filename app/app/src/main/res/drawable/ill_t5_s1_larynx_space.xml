@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- T5-1 喉位感知图解(自制,无内嵌文字):左=哈欠·喉下移·腔体大(大空间);右=吞咽·喉上提·腔体小(小空间)。
+     配文见 strings.xml:training_illus_t5_s1_desc -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="160dp"
+    android:viewportWidth="240"
+    android:viewportHeight="160">
+
+    <!-- 左:哈欠(大空间,喉位低) -->
+    <path
+        android:fillColor="#E1BEE7"
+        android:pathData="M26,70 a34,34 0 1,0 68,0 a34,34 0 1,0 -68,0 z" />
+    <!-- 张大的口腔(大腔体) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#7E57C2"
+        android:strokeWidth="3"
+        android:pathData="M56,68 a19,15 0 1,0 38,0 a19,15 0 1,0 -38,0 z" />
+    <!-- 咽腔通道(长) -->
+    <path
+        android:fillColor="#F3E5F5"
+        android:strokeColor="#7E57C2"
+        android:strokeWidth="2.5"
+        android:pathData="M69,84 h12 v28 h-12 z" />
+    <!-- 喉位块(低) -->
+    <path
+        android:fillColor="#7E57C2"
+        android:pathData="M62,114 h26 a5,5 0 0,1 5,5 v8 a5,5 0 0,1 -5,5 h-26 a5,5 0 0,1 -5,-5 v-8 a5,5 0 0,1 5,-5 z" />
+    <!-- 喉位下移箭头 -->
+    <path
+        android:pathData="M104,100 v22"
+        android:strokeColor="#9E9E9E"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M104,122 l-5,-8 h10 z"
+        android:fillColor="#9E9E9E" />
+
+    <!-- 右:吞咽(小空间,喉位高) -->
+    <path
+        android:fillColor="#E1BEE7"
+        android:pathData="M146,70 a34,34 0 1,0 68,0 a34,34 0 1,0 -68,0 z" />
+    <!-- 收小的口腔(小腔体) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#7E57C2"
+        android:strokeWidth="3"
+        android:pathData="M182,68 a10,8 0 1,0 20,0 a10,8 0 1,0 -20,0 z" />
+    <!-- 咽腔通道(短) -->
+    <path
+        android:fillColor="#F3E5F5"
+        android:strokeColor="#7E57C2"
+        android:strokeWidth="2.5"
+        android:pathData="M187,78 h10 v12 h-10 z" />
+    <!-- 喉位块(高) -->
+    <path
+        android:fillColor="#EC407A"
+        android:pathData="M180,92 h24 a5,5 0 0,1 5,5 v8 a5,5 0 0,1 -5,5 h-24 a5,5 0 0,1 -5,-5 v-8 a5,5 0 0,1 5,-5 z" />
+    <!-- 喉位上移箭头 -->
+    <path
+        android:pathData="M224,122 v-22"
+        android:strokeColor="#9E9E9E"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M224,100 l-5,8 h10 z"
+        android:fillColor="#9E9E9E" />
+</vector>

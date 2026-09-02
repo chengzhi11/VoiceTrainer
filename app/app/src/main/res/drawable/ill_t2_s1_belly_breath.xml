@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- T2-1 腹式呼吸图解(自制,无内嵌文字):左=鼻吸、腹部鼓起、肩部锁定;右=口呼、腹气回落。
+     配文见 strings.xml:training_illus_t2_s1_desc -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="160dp"
+    android:viewportWidth="240"
+    android:viewportHeight="160">
+
+    <!-- 左:吸气(腹部鼓起) -->
+    <path
+        android:pathData="M4,36 h10"
+        android:strokeColor="#7E57C2"
+        android:strokeWidth="3"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M14,36 l-6,-4 v8 z"
+        android:fillColor="#7E57C2" />
+    <path
+        android:fillColor="#E1BEE7"
+        android:pathData="M16,54 a20,20 0 0,1 40,0 v40 a20,22 0 0,1 -40,0 z" />
+    <path
+        android:fillColor="#CE93D8"
+        android:pathData="M20,88 a17,15 0 0,1 34,0 a17,15 0 0,1 -34,0 z" />
+    <!-- 肩部锁定括号 -->
+    <path
+        android:pathData="M12,50 v-8 h48 v8"
+        android:strokeColor="#9E9E9E"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <!-- 腹部外扩箭头 -->
+    <path
+        android:pathData="M60,96 h16"
+        android:strokeColor="#EC407A"
+        android:strokeWidth="4"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M76,96 l-7,-5 v10 z"
+        android:fillColor="#EC407A" />
+
+    <!-- 右:呼气(腹气回落) -->
+    <path
+        android:pathData="M164,36 h14"
+        android:strokeColor="#7E57C2"
+        android:strokeWidth="3"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M178,36 l-6,-4 v8 z"
+        android:fillColor="#7E57C2" />
+    <path
+        android:fillColor="#E1BEE7"
+        android:pathData="M128,54 a20,20 0 0,1 40,0 v40 a20,22 0 0,1 -40,0 z" />
+    <path
+        android:fillColor="#B0BEC5"
+        android:pathData="M134,90 a11,9 0 0,1 22,0 a11,9 0 0,1 -22,0 z" />
+    <!-- 腹部回缩箭头(指向腹内) -->
+    <path
+        android:pathData="M204,96 h-16"
+        android:strokeColor="#EC407A"
+        android:strokeWidth="4"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M188,96 l7,-5 v10 z"
+        android:fillColor="#EC407A" />
+
+    <!-- 手(放在腹部)示意:左右各一只小圆手 -->
+    <path
+        android:fillColor="#F8BBD0"
+        android:pathData="M40,96 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 z" />
+    <path
+        android:fillColor="#F8BBD0"
+        android:pathData="M152,96 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 z" />
+</vector>
