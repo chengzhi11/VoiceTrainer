@@ -1,6 +1,8 @@
 # 本地私有产物与内部文件,不入公开仓库(开源审核结论)
 dist/
 docs/
+# 发布签名材料(keystore 与口令),绝不入库——丢失则后续版本无法同签名升级
+keystore/
 assets/say_*
 delivery_report.md
 description.md

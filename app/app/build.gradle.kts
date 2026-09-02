@@ -13,7 +13,7 @@ android {
         minSdk = 26
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0.0-beta"
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -21,9 +21,29 @@ android {
         }
     }
 
+    // 发布签名:从 git 排除的 keystore/keystore.properties 注入(口令不入库);
+    // 文件缺失(如开源用户克隆)时降级为无签名配置,release 产出未签名 APK,不影响 debug 构建
+    val keystorePropertiesFile = rootProject.file("../keystore/keystore.properties")
+    val keystoreProperties = java.util.Properties()
+    if (keystorePropertiesFile.exists()) {
+        keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
+    }
+
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
+            signingConfig = signingConfigs.findByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
