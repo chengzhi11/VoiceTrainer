@@ -30,11 +30,27 @@ object VoiceTypeThresholds {
     /** 男声区:F0 归一 < 此值 */
     const val MALE_REGION_F0_NORM_MAX = 0.3
 
-    // ---- 输入有效性(有声帧 ≥15 且占比 ≥60% 方出具判别结论) ----
-    /** 有声帧(pitch 且置信度达标)占比低于此值 → 判数据不足,不输出四态 */
-    const val MIN_VOICED_RATIO = 0.6
-    /** 有声帧绝对数量下限(防止超短录音误判) */
-    const val MIN_VOICED_FRAMES = 15
+    // ---- 输入有效性(COD-45 定标修订:废除整段占比门,改为「绝对时长+活跃占比+电平/信噪双门」) ----
+    /** 录音总时长下限 (ms):短于 3.5s 物理上攒不够 3.0s 有效语音 → 归因 TOO_SHORT */
+    const val MIN_TOTAL_DURATION_MS = 3500.0
+    /** 有效(有声)语音时长下限 (ms):保证 F0 分位数/jitter 统计稳定(原 15 帧过松,0.7s 噪声脉冲即可能凑够) */
+    const val MIN_VOICED_DURATION_MS = 3000.0
+    /** 活跃段有声占比 war 下限(有声帧/活跃帧):分母换活跃帧,剥离起手/收尾/停顿静音;0.35 恰在可用/不可用分界 */
+    const val MIN_ACTIVE_VOICED_RATIO = 0.35
+    /** 语音电平下限(帧 RMS P90):0.02(-34dBFS)是 YIN 开始可靠的下界,更低时 F0 已有 5% 级偏差 */
+    const val MIN_SPEECH_LEVEL = 0.02
+    /** 电平/底噪幅度比下限(P90/噪声底,≈11dB 功率):10dB SNR 档实测 3.8 通过、5dB 档 1.7 拒绝 */
+    const val MIN_LEVEL_SNR = 3.5
+    /** YIN 置信度门(防假分主闸:纯粉红噪声加到语音电平仍 0 有声帧,实测零误触发)——保持不动 */
+    const val MIN_PITCH_CONFIDENCE = 0.7
+    /** 活跃帧定义的绝对电平下限:活跃帧 = rms > max(2×noiseFloor, 此值) */
+    const val ACTIVE_FRAME_MIN_RMS = 0.004
+    /** 活跃帧定义的底噪倍数 */
+    const val ACTIVE_FRAME_NOISE_MULT = 2.0
+    /** 噪声底估计:YIN 未检出帧不足总帧数此比例时,退用全体帧 P10 */
+    const val NOISE_FLOOR_FALLBACK_UNVOICED_FRACTION = 0.1
+    /** 完全静音判定(TOO_QUIET 的子集):语音电平低于此值 → 归因 SILENT */
+    const val SILENT_SPEECH_LEVEL = 0.005
 
     // ---- 五维评分权重(总 100):音高/共鸣/稳定性/音质/平滑度 ----
     const val WEIGHT_PITCH = 35.0

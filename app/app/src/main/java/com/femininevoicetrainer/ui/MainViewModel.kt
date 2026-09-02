@@ -66,6 +66,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val currentF0: Double = 0.0,
         val currentScore: Double = 0.0,
         val currentProbability: Double = 0.0,
+        /** 录音中实时语音电平(EMA;0.02 以下偏轻,0.04 以上充足) */
+        val liveSpeechLevel: Double = 0.0,
+        /** 录音中累计有效语音秒数(目标 3.0s) */
+        val liveVoicedSeconds: Double = 0.0,
         val recordingDuration: Long = 0L,
         val recordings: List<Recording> = emptyList(),
         val isLoading: Boolean = false,
@@ -125,6 +129,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             // Observe recording duration changes
             audioRecorder.recordingDuration.collect { duration ->
                 _uiState.value = _uiState.value.copy(recordingDuration = duration)
+            }
+        }
+
+        // 录音中实时有效性提示(COD-45:电平条 + 有效语音秒数,复用同一 dispatcher 的帧流)
+        viewModelScope.launch {
+            pitchAnalyzer.currentSpeechLevel.collect { level ->
+                _uiState.value = _uiState.value.copy(liveSpeechLevel = level)
+            }
+        }
+        viewModelScope.launch {
+            pitchAnalyzer.currentVoicedSeconds.collect { seconds ->
+                _uiState.value = _uiState.value.copy(liveVoicedSeconds = seconds)
             }
         }
 
@@ -225,7 +241,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         smoothnessScore = evaluation.subScores.smoothness,
                         mismatch = evaluation.mismatch,
                         voiceType = evaluation.voiceType?.label,
-                        voiceCondition = evaluation.condition.label
+                        // 数据不足行带上失败归因(录音太短/声音太轻/…),回环回归与历史排查可直接读因
+                        voiceCondition = evaluation.condition.label +
+                            (features.failReason?.let { "(${it.label})" } ?: "")
                     )
                     recordingDao.insert(recording)
                     loadRecordings()

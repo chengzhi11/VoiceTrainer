@@ -71,6 +71,23 @@ class PitchAnalyzer {
     val currentProbability: StateFlow<Double> = _currentProbability.asStateFlow()
 
     /**
+     * 录音中实时语音电平(短窗 EMA 平滑,由特征采集器逐帧回写 [publishSpeechLevel];
+     * 刻度参考 VoiceTypeThresholds.MIN_SPEECH_LEVEL=0.02,低于即「偏轻」)
+     */
+    private val _currentSpeechLevel = MutableStateFlow(0.0)
+    val currentSpeechLevel: StateFlow<Double> = _currentSpeechLevel.asStateFlow()
+
+    /**
+     * 录音中累计有效语音秒数(有声帧 × 帧长 46.4ms,目标 3.0s 见 MIN_VOICED_DURATION_MS)
+     */
+    private val _currentVoicedSeconds = MutableStateFlow(0.0)
+    val currentVoicedSeconds: StateFlow<Double> = _currentVoicedSeconds.asStateFlow()
+
+    /** 电平 EMA 状态与有声帧计数(仅 dispatcher 线程访问,随 startAnalysis 重置) */
+    private var liveLevelEma = 0.0
+    private var liveVoicedFrames = 0
+
+    /**
      * 历史F0值 (用于平滑和统计)
      */
     private val f0History = LinkedList<Double>()
@@ -150,6 +167,10 @@ class PitchAnalyzer {
         probabilityHistory.clear()
         rawF0History.clear()
         rawProbabilityHistory.clear()
+        liveLevelEma = 0.0
+        liveVoicedFrames = 0
+        _currentSpeechLevel.value = 0.0
+        _currentVoicedSeconds.value = 0.0
 
         // 初始化YIN检测器
         pitchDetector = initializePitchDetector()
@@ -213,6 +234,14 @@ class PitchAnalyzer {
                     lastFrameProbability = frameProb
                     rawF0History.add(frameF0)
                     rawProbabilityHistory.add(frameProb)
+
+                    // 实时有效性:有声帧口径与 analyze() 完全一致(prob>0.7 且 F0 带内),
+                    // 供录音中「有效语音秒数」进度提示(目标 3.0s)
+                    if (frameProb > VoiceFeatureExtractor.MIN_PITCH_CONFIDENCE && frameF0 > 0.0) {
+                        liveVoicedFrames++
+                        _currentVoicedSeconds.value =
+                            liveVoicedFrames * BUFFER_SIZE / SAMPLE_RATE.toDouble()
+                    }
                 }
                 return true
             }
@@ -245,6 +274,19 @@ class PitchAnalyzer {
         _currentProbability.value = 0.0
         lastFrameF0 = 0.0
         lastFrameProbability = 0.0
+        liveLevelEma = 0.0
+        liveVoicedFrames = 0
+        _currentSpeechLevel.value = 0.0
+        _currentVoicedSeconds.value = 0.0
+    }
+
+    /**
+     * 特征采集器逐帧回写语音电平(EMA 平滑,时间常数 ~4 帧 ≈190ms,显示稳定);
+     * 与 currentF0 同一 dispatcher 线程,无并发写。
+     */
+    fun publishSpeechLevel(rms: Double) {
+        liveLevelEma = if (liveLevelEma <= 0.0) rms else 0.25 * rms + 0.75 * liveLevelEma
+        _currentSpeechLevel.value = liveLevelEma
     }
 
     /**

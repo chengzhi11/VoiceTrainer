@@ -27,7 +27,7 @@ object VoiceEvaluator {
         EUNUCH_RISK("太监音风险(F0 高但共鸣未跟上)"),
         MALE_REGION("男声区"),
         TRANSITION("过渡区(女声化进行中)"),
-        DATA_INSUFFICIENT("数据不足(有效语音过短)")
+        DATA_INSUFFICIENT("数据不足")
     }
 
     /** 五维子分(各自权重点制)与总分(0-100) */
@@ -56,7 +56,8 @@ object VoiceEvaluator {
 
     /**
      * 完整评估:特征 → 归一化 → mismatch → 五维评分 → 四态判别 → 声线规则树。
-     * 数据不足(有效语音过短/占比过低)时短路输出 DATA_INSUFFICIENT。
+     * 数据不足(时长/电平/信噪/有效人声任一门未过)时短路输出 DATA_INSUFFICIENT,
+     * 细化原因见 [VoiceFeatureExtractor.VoiceFeatures.failReason](COD-45 失败归因)。
      */
     fun evaluate(features: VoiceFeatures): VoiceEvaluation {
         if (!features.isUsable) {

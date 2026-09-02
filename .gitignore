@@ -9,3 +9,4 @@ CLAUDE.md
 .agent_context/
 .claude/
 .DS_Store
+__pycache__/

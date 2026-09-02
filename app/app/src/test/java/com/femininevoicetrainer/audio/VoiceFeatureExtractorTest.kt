@@ -275,7 +275,8 @@ class VoiceFeatureExtractorTest {
     )
 
     /**
-     * 置信度 >0.7 过滤:噪声帧(prob=0.3, F0=60)不得污染会话统计
+     * 置信度 >0.7 过滤:噪声帧(prob=0.3, F0=60)不得污染会话统计。
+     * 噪声帧电平须显著低于语音帧(真实回环数据如此),否则电平/信噪门会把均匀电平判为噪声。
      */
     @Test
     fun testAnalyze_ConfidenceFilterExcludesNoiseFrames() {
@@ -288,9 +289,9 @@ class VoiceFeatureExtractorTest {
             f0.add(220.0)
             prob.add(0.95)
         }
-        // 20 帧环境噪声(低置信度、低 F0)
+        // 20 帧环境噪声(低置信度、低 F0、低电平)
         repeat(20) {
-            frames.add(frameDsp())
+            frames.add(frameDsp(rms = 0.003))
             f0.add(60.0)
             prob.add(0.3)
         }
@@ -338,15 +339,191 @@ class VoiceFeatureExtractorTest {
         assertEquals(0.0, features.f0P50, 0.0)
     }
 
-    /** raw 通道值经聚合不被平滑抹平:交替 F0 序列的 CV 保持真实扰动 */
+    /** raw 通道值经聚合不被平滑抹平:交替 F0 序列的 CV 保持真实扰动(会话需过有效性门) */
     @Test
     fun testAnalyze_RawChannelPreservesPerturbation() {
-        val frames = List(60) { frameDsp() }
-        val f0 = List(60) { if (it % 2 == 0) 210.0 else 230.0 }
-        val prob = List(60) { 0.95 }
+        val voicedN = 80
+        val frames = List(voicedN) { frameDsp() } + List(20) { frameDsp(rms = 0.004) }
+        val f0 = List(voicedN) { if (it % 2 == 0) 210.0 else 230.0 } + List(20) { 0.0 }
+        val prob = List(voicedN) { 0.95 } + List(20) { 0.0 }
         val features = VoiceFeatureExtractor.analyze(frames, f0, prob)
+        assertTrue(features.isUsable)
         // 交替 220±10:总体 std=10,mean=220 → CV≈0.045
         assertTrue("Raw channel CV should reflect real perturbation", features.f0Cv > 0.03)
         assertTrue(features.jitterRap > 0.02)
+    }
+
+    // ================= 会话有效性门限与失败归因(COD-46,定标报告建议表) =================
+
+    /** 构造一轮会话:voiced 帧(高电平有声)+ quiet 帧(默认静音底噪) */
+    private fun session(
+        voiced: Int,
+        quiet: Int = 20,
+        voicedRms: Double = 0.1,
+        quietRms: Double = 0.004
+    ): Triple<MutableList<FrameDsp>, MutableList<Double>, MutableList<Double>> {
+        val frames = mutableListOf<FrameDsp>()
+        val f0 = mutableListOf<Double>()
+        val prob = mutableListOf<Double>()
+        repeat(voiced) {
+            frames.add(frameDsp(voicedRms)); f0.add(220.0); prob.add(0.95)
+        }
+        repeat(quiet) {
+            frames.add(frameDsp(quietRms)); f0.add(0.0); prob.add(0.0)
+        }
+        return Triple(frames, f0, prob)
+    }
+
+    private fun analyzeSession(
+        voiced: Int,
+        quiet: Int = 20,
+        voicedRms: Double = 0.1,
+        quietRms: Double = 0.004
+    ): VoiceFeatures {
+        val (frames, f0, prob) = session(voiced, quiet, voicedRms, quietRms)
+        return VoiceFeatureExtractor.analyze(frames, f0, prob)
+    }
+
+    /** 四门全过(时长/有效语音/活跃占比/电平/信噪)→ 可用,无归因 */
+    @Test
+    fun testSessionValid_AllGatesPass() {
+        val features = analyzeSession(voiced = 80, quiet = 20)
+        assertTrue(features.isUsable)
+        assertNull(features.failReason)
+        assertEquals(0.1, features.speechLevel, 0.001)
+        assertEquals(0.004, features.noiseFloor, 1e-9)
+        assertEquals(1.0, features.activeVoicedRatio, 1e-9)
+    }
+
+    /**
+     * 定标主根因回归(GH#1):整段占比 0.385 < 旧门限 0.6,
+     * 但 70 帧有声(3.25s)分布在 182 帧自然停顿里 —— 新门限下必须可用。
+     */
+    @Test
+    fun testSessionValid_NaturalPausesNoLongerRejected() {
+        val features = analyzeSession(voiced = 70, quiet = 112)
+        assertTrue(features.voicedRatio < 0.6)
+        assertTrue("war 分母换活跃帧后自然停顿不再拒绝高质量语音", features.isUsable)
+        assertNull(features.failReason)
+    }
+
+    /** 总时长 < 3.5s → TOO_SHORT */
+    @Test
+    fun testSessionFail_TooShort() {
+        val features = analyzeSession(voiced = 50, quiet = 10)
+        assertFalse(features.isUsable)
+        assertEquals(VoiceFeatureExtractor.SessionFailReason.TOO_SHORT, features.failReason)
+    }
+
+    /** 优先级 1:又短又轻 → 先归因 TOO_SHORT */
+    @Test
+    fun testSessionFail_ShortBeatsQuiet() {
+        val features = analyzeSession(voiced = 10, quiet = 30, voicedRms = 0.004, quietRms = 0.002)
+        assertEquals(VoiceFeatureExtractor.SessionFailReason.TOO_SHORT, features.failReason)
+    }
+
+    /** 语音电平 P90 < 0.005 → SILENT(TOO_QUIET 子集,麦克风遮挡/完全静音) */
+    @Test
+    fun testSessionFail_Silent() {
+        val features = analyzeSession(voiced = 0, quiet = 80, quietRms = 0.001)
+        assertFalse(features.isUsable)
+        assertEquals(VoiceFeatureExtractor.SessionFailReason.SILENT, features.failReason)
+    }
+
+    /** 语音电平 P90 ∈ [0.005, 0.02) → TOO_QUIET(其余门全过,隔离归因) */
+    @Test
+    fun testSessionFail_TooQuiet() {
+        val features = analyzeSession(voiced = 65, quiet = 15, voicedRms = 0.01, quietRms = 0.002)
+        assertFalse(features.isUsable)
+        assertEquals(VoiceFeatureExtractor.SessionFailReason.TOO_QUIET, features.failReason)
+    }
+
+    /** 优先级 2:又轻又吵(信噪比也低)→ 先归因 TOO_QUIET,不误报「太吵」 */
+    @Test
+    fun testSessionFail_QuietBeatsNoisy() {
+        val features = analyzeSession(voiced = 65, quiet = 15, voicedRms = 0.01, quietRms = 0.008)
+        assertEquals(VoiceFeatureExtractor.SessionFailReason.TOO_QUIET, features.failReason)
+    }
+
+    /** 电平/底噪 < 3.5 → TOO_NOISY(有效语音时长已达标,隔离归因) */
+    @Test
+    fun testSessionFail_TooNoisy() {
+        val features = analyzeSession(voiced = 65, quiet = 20, voicedRms = 0.1, quietRms = 0.06)
+        assertFalse(features.isUsable)
+        assertEquals(VoiceFeatureExtractor.SessionFailReason.TOO_NOISY, features.failReason)
+    }
+
+    /** 优先级 3:又吵又缺人声(有声 1.86s < 3s)→ 先归因 TOO_NOISY */
+    @Test
+    fun testSessionFail_NoisyBeatsInsuffVoiced() {
+        val features = analyzeSession(voiced = 40, quiet = 45, voicedRms = 0.1, quietRms = 0.06)
+        assertEquals(VoiceFeatureExtractor.SessionFailReason.TOO_NOISY, features.failReason)
+    }
+
+    /** 兜底归因:其余门全过但有声时长 < 3.0s → INSUFF_VOICED */
+    @Test
+    fun testSessionFail_InsuffVoiced_VoicedDuration() {
+        val features = analyzeSession(voiced = 40, quiet = 40)
+        assertFalse(features.isUsable)
+        assertEquals(VoiceFeatureExtractor.SessionFailReason.INSUFF_VOICED, features.failReason)
+    }
+
+    /**
+     * 兜底归因第二变体:活跃段有声占比 war < 0.35 ——
+     * 语音 + 大量「响亮但无声」噪声帧(音乐/电视型背景),电平/信噪门均过。
+     */
+    @Test
+    fun testSessionFail_InsuffVoiced_LowWar() {
+        val voiced = 70
+        val loudUnvoiced = 200   // 语音电平的非有声帧
+        val quietFrames = 250    // 安静间隙(把噪声底压回低位)
+        val (frames, f0, prob) = session(voiced, quietFrames, voicedRms = 0.12, quietRms = 0.002)
+        // 在尾部插入响亮无声帧(保持 unvoiced 多数为安静帧 → P50 底噪不被抬高)
+        repeat(loudUnvoiced) {
+            frames.add(frameDsp(0.05)); f0.add(0.0); prob.add(0.0)
+        }
+        val features = VoiceFeatureExtractor.analyze(frames, f0, prob)
+
+        assertEquals(0.12, features.speechLevel, 0.001)
+        assertEquals(0.002, features.noiseFloor, 1e-9)
+        assertEquals(voiced.toDouble() / (voiced + loudUnvoiced), features.activeVoicedRatio, 0.001)
+        assertTrue("war=${features.activeVoicedRatio} 应 < 0.35", features.activeVoicedRatio < 0.35)
+        assertEquals(VoiceFeatureExtractor.SessionFailReason.INSUFF_VOICED, features.failReason)
+    }
+
+    /**
+     * 防假分回归(COD-30 红线):语音电平纯噪声(prob 全部低于置信度门)
+     * → 0 有声帧、绝不 usable;YIN prob>0.7 门保持不动。
+     */
+    @Test
+    fun testFalseScoreGuard_NoiseAtSpeechLevelNeverUsable() {
+        val frames = List(100) { frameDsp(0.05) }
+        val f0 = List(100) { 0.0 }
+        val prob = List(100) { 0.3 }
+        val features = VoiceFeatureExtractor.analyze(frames, f0, prob)
+
+        assertEquals(0, features.voicedFrameCount)
+        assertFalse("语音电平纯噪声绝不可用", features.isUsable)
+        assertEquals(VoiceFeatureExtractor.SessionFailReason.TOO_NOISY, features.failReason)
+    }
+
+    /** INSUFF_VOICED 且 war<0.1 追加「关掉音乐/电视」提示;其余场景无追加 */
+    @Test
+    fun testFailReasonExtraAdvice_OnlyForInsuffVoicedLowWar() {
+        val reason = VoiceFeatureExtractor.SessionFailReason.INSUFF_VOICED
+        assertEquals("若在放音乐/电视,请先关掉", reason.extraAdvice(0.05))
+        assertNull(reason.extraAdvice(0.3))
+        assertNull(
+            "非 INSUFF_VOICED 不追加",
+            VoiceFeatureExtractor.SessionFailReason.TOO_QUIET.extraAdvice(0.0)
+        )
+    }
+
+    /** 边界:65 帧(3018ms)过 3.0s 门、64 帧(2972ms)不过——MIN_VOICED_DURATION_MS 帧口径 */
+    @Test
+    fun testVoicedDurationBoundary() {
+        assertTrue("65 帧 = 3018ms ≥ 3000ms", analyzeSession(voiced = 65, quiet = 20).isUsable)
+        val features = analyzeSession(voiced = 64, quiet = 20)
+        assertEquals(VoiceFeatureExtractor.SessionFailReason.INSUFF_VOICED, features.failReason)
     }
 }

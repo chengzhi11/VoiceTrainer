@@ -24,6 +24,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.femininevoicetrainer.audio.VoiceEvaluator
+import com.femininevoicetrainer.audio.VoiceFeatureExtractor
+import com.femininevoicetrainer.audio.VoiceTypeThresholds
 import com.femininevoicetrainer.data.Recording
 import java.io.File
 
@@ -113,7 +115,18 @@ fun RecordingScreen(
             isRecording = uiState.isRecording
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 录音中实时有效性提示(COD-46:电平条 + 有效语音秒数,不让用户录完才发现数据不足)
+        if (uiState.isRecording) {
+            LiveValidityCard(
+                speechLevel = uiState.liveSpeechLevel,
+                voicedSeconds = uiState.liveVoicedSeconds,
+                durationMs = uiState.recordingDuration
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Recording Control Button (长按录音)
         RecordingButton(
@@ -270,6 +283,131 @@ fun ScoreCard(
         }
     }
 }
+
+/**
+ * 录音中实时有效性卡(COD-46,人类硬性要求「别让用户录完才知道数据不足」):
+ * - 声音电平条:0.02(最低可用)/0.04(充足)两档刻度线,低于 0.02 变黄提示偏轻
+ * - 有效语音:累计有声秒数进度条,目标 3.0s(与评分门限 MIN_VOICED_DURATION_MS 一致)
+ * - 时长:已录秒数对照 3.5s 最低标线(MIN_TOTAL_DURATION_MS)
+ */
+@Composable
+fun LiveValidityCard(
+    speechLevel: Double,
+    voicedSeconds: Double,
+    durationMs: Long
+) {
+    val minLevel = VoiceTypeThresholds.MIN_SPEECH_LEVEL
+    val okLevel = LEVEL_BAR_OK
+    val levelBarMax = LEVEL_BAR_MAX
+    val voicedTargetSec = (VoiceTypeThresholds.MIN_VOICED_DURATION_MS / 1000.0)
+    val minDurationSec = (VoiceTypeThresholds.MIN_TOTAL_DURATION_MS / 1000.0)
+    val durationSec = durationMs / 1000.0
+    val levelWarn = speechLevel < minLevel
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (levelWarn) MaterialTheme.colorScheme.errorContainer
+            else MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "录音有效性",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = if (levelWarn) MaterialTheme.colorScheme.onErrorContainer
+                else MaterialTheme.colorScheme.onSecondaryContainer
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // 声音电平条(0.02/0.04 刻度线;低于 0.02 变黄)
+            Text(
+                text = if (levelWarn) "声音偏轻:拿近一点或稍微大声一点"
+                else "声音电平合适",
+                style = MaterialTheme.typography.bodySmall,
+                color = if (levelWarn) MaterialTheme.colorScheme.onErrorContainer
+                else MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Box(modifier = Modifier.fillMaxWidth().height(10.dp)) {
+                LinearProgressIndicator(
+                    progress = (speechLevel / levelBarMax).toFloat().coerceIn(0f, 1f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(10.dp)
+                        .clip(RoundedCornerShape(5.dp)),
+                    color = if (levelWarn) LevelWarnColor else MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+                // 刻度线:0.02(最低)与 0.04(充足)
+                listOf(minLevel / levelBarMax, okLevel / levelBarMax).forEach { frac ->
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .fillMaxHeight()
+                            .fillMaxWidth(frac.toFloat().coerceIn(0f, 1f))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .width(2.dp)
+                                .fillMaxHeight(0.8f)
+                                .background(MaterialTheme.colorScheme.outline)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // 有效语音秒数进度(目标 3.0s)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                LinearProgressIndicator(
+                    progress = (voicedSeconds / voicedTargetSec).toFloat().coerceIn(0f, 1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(3.dp))
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = if (voicedSeconds >= voicedTargetSec) "有效语音已达标"
+                    else String.format("有效语音 %.1f / %.1f 秒", voicedSeconds, voicedTargetSec),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (levelWarn) MaterialTheme.colorScheme.onErrorContainer
+                    else MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // 已录时长对照 3.5s 最低标线
+            Text(
+                text = if (durationSec >= minDurationSec) String.format("已录 %.1f 秒(时长已足够)", durationSec)
+                else String.format("已录 %.1f 秒(至少 %.1f 秒)", durationSec, minDurationSec),
+                style = MaterialTheme.typography.bodySmall,
+                color = if (levelWarn) MaterialTheme.colorScheme.onErrorContainer
+                else MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+    }
+}
+
+/** 电平偏轻警示色(黄,低于 0.02 电平条变黄——COD-45 实时提示规格) */
+private val LevelWarnColor = Color(0xFFF6A600)
+
+/** 实时电平条满刻度与「充足」刻度(0.02 最低刻度取 VoiceTypeThresholds.MIN_SPEECH_LEVEL) */
+private const val LEVEL_BAR_MAX = 0.08
+private const val LEVEL_BAR_OK = 0.04
 
 /**
  * 录音按钮(需求①:长按手势——按下开始录音,松开结束)
@@ -729,7 +867,9 @@ fun ResultCard(result: MainViewModel.SessionResult) {
             Spacer(modifier = Modifier.height(8.dp))
 
             if (evaluation.condition == VoiceEvaluator.VoiceCondition.DATA_INSUFFICIENT) {
-                // 数据不足空态:不展示 0-100 分与全零五维条,避免误导
+                // 数据不足空态:不展示 0-100 分与全零五维条,避免误导;
+                // 但必须给出具体原因与改进建议(COD-46 人类硬性要求:不能只说「数据不足」)
+                val fail = result.features.failReason
                 Text(
                     text = "数据不足",
                     style = MaterialTheme.typography.displaySmall,
@@ -737,13 +877,78 @@ fun ResultCard(result: MainViewModel.SessionResult) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = evaluation.condition.label,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.errorContainer
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = when (fail) {
+                                    VoiceFeatureExtractor.SessionFailReason.TOO_NOISY -> Icons.Default.Warning
+                                    else -> Icons.Default.Info
+                                },
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = fail?.label ?: "未能评估",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = fail?.advice
+                                ?: "没有捕捉到足够的人声,请长按多说几秒再试一次",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            textAlign = TextAlign.Center
+                        )
+
+                        // 有效人声不足且活跃段占比极低:疑似在放音乐/电视
+                        fail?.extraAdvice(result.features.activeVoicedRatio)?.let { extra ->
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = extra,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        // 量化诊断行:让用户看到差在哪(有效语音秒数/电平)
+                        val voicedSec =
+                            result.features.voicedFrameCount * VoiceFeatureExtractor.FRAME_MS / 1000.0
+                        Text(
+                            text = String.format(
+                                "已录 %.1f 秒 · 有效语音 %.1f 秒(需 ≥%.0f)· 电平 %.3f(需 ≥%.2f)",
+                                result.durationMs / 1000.0,
+                                voicedSec,
+                                VoiceTypeThresholds.MIN_VOICED_DURATION_MS / 1000.0,
+                                result.features.speechLevel,
+                                VoiceTypeThresholds.MIN_SPEECH_LEVEL
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
             } else {
                 // 总分 + 声线标签 + 判别
                 Text(

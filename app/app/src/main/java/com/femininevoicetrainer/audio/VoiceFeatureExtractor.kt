@@ -49,8 +49,11 @@ object VoiceFeatureExtractor {
     private const val FORMANT_MIN_PEAK_DB = 3.0
     private const val FORMANT_MIN_SPACING_HZ = 180.0
 
-    /** 置信度过滤阈值(防环境噪声拉低统计的系统性解法,前期调研实测确定) */
-    const val MIN_PITCH_CONFIDENCE = 0.7
+    /** 置信度过滤阈值(防环境噪声拉低统计的系统性解法;权威定义在 [VoiceTypeThresholds],COD-45 后保持 0.7 不动) */
+    const val MIN_PITCH_CONFIDENCE = VoiceTypeThresholds.MIN_PITCH_CONFIDENCE
+
+    /** dispatcher 帧时长 (ms):2048 样本 @44100Hz 无重叠,会话时长/有效时长按帧数 × 此值换算 */
+    const val FRAME_MS = 2048.0 / 44100.0 * 1000.0
 
     // ================= 数据结构 =================
 
@@ -66,6 +69,23 @@ object VoiceFeatureExtractor {
         val f3: Double,
         val tiltDbOct: Double
     )
+
+    /**
+     * 失败归因(COD-45 失败归因判定表,按序互斥、先命中先归因:
+     * TOO_SHORT → TOO_QUIET(含子集 SILENT)→ TOO_NOISY → INSUFF_VOICED)。
+     * label 用于 UI 标题与 DB 归因留存,advice 为用户提示文案(报告建议稿)。
+     */
+    enum class SessionFailReason(val label: String, val advice: String) {
+        TOO_SHORT("录音太短", "录音太短啦,请长按多说几秒(建议 5 秒以上)"),
+        SILENT("几乎无声", "几乎没听到声音,请检查麦克风是否被遮挡"),
+        TOO_QUIET("声音太轻", "声音有点小,请把手机拿近一点或稍微大声一点"),
+        TOO_NOISY("环境噪声大", "环境噪声有点大,请换安静些的地方或离手机再近一点"),
+        INSUFF_VOICED("有效人声不足", "没有捕捉到足够的人声,请对着手机底部麦克风、用平稳的声音连续说话");
+
+        /** INSUFF_VOICED 且活跃段有声占比极低时追加的文案(报告:疑似在放音乐/电视) */
+        fun extraAdvice(activeVoicedRatio: Double): String? =
+            if (this == INSUFF_VOICED && activeVoicedRatio < 0.1) "若在放音乐/电视,请先关掉" else null
+    }
 
     /** 会话级特征聚合结果(判别与评分共用的 features 集合) */
     data class VoiceFeatures(
@@ -86,7 +106,15 @@ object VoiceFeatureExtractor {
         val tiltDbOct: Double,
         val jitterRap: Double,
         val shimmerDb: Double,
-        val rmsMean: Double
+        val rmsMean: Double,
+        /** 语音电平(帧 RMS P90),有效性门限与 TOO_QUIET/SILENT 归因输入(COD-45 #4) */
+        val speechLevel: Double = 0.0,
+        /** 噪声底(YIN 未检出帧 RMS P50,不足 10% 帧时退全体帧 P10)(COD-45 #7) */
+        val noiseFloor: Double = 0.0,
+        /** 活跃段有声占比 war = 有声帧/活跃帧,取代整段占比(COD-45 #3) */
+        val activeVoicedRatio: Double = 0.0,
+        /** 失败归因(可用时为 null;判定顺序见 [SessionFailReason]) */
+        val failReason: SessionFailReason? = null
     ) {
         companion object {
             fun empty(): VoiceFeatures = VoiceFeatures(
@@ -103,6 +131,11 @@ object VoiceFeatureExtractor {
     /**
      * 聚合一轮录音的特征。
      *
+     * 有效性判定(COD-45 门限修订):总时长 ≥3.5s ∧ 有效语音 ≥3.0s ∧ 活跃段有声占比 war ≥0.35
+     * ∧ 语音电平 P90 ≥0.02 ∧ 电平/底噪比 ≥3.5;不满足时按
+     * TOO_SHORT → SILENT/TOO_QUIET → TOO_NOISY → INSUFF_VOICED 先命中先归因。
+     * YIN 置信度门(>0.7)是有声帧判定的前置闸,保持不动(防假分主闸)。
+     *
      * @param dspFrames 逐帧 DSP 标量(与 rawF0/rawProb 按帧序对齐)
      * @param rawF0 逐帧 raw 未平滑 F0(Hz,未检出为 0)— jitter 必须用它,不能用平滑值
      * @param rawProb 逐帧 YIN 置信度
@@ -111,22 +144,60 @@ object VoiceFeatureExtractor {
         val n = minOf(dspFrames.size, rawF0.size, rawProb.size)
         if (n == 0) return VoiceFeatures.empty()
 
-        val voiced = (0 until n).filter {
-            rawProb[it] > MIN_PITCH_CONFIDENCE && rawF0[it] > 0.0
+        val voicedMask = BooleanArray(n)
+        for (i in 0 until n) {
+            voicedMask[i] = rawProb[i] > MIN_PITCH_CONFIDENCE && rawF0[i] > 0.0
         }
+        val voiced = (0 until n).filter { voicedMask[it] }
         val voicedRatio = voiced.size.toDouble() / n
-        val usable = voiced.size >= VoiceTypeThresholds.MIN_VOICED_FRAMES &&
-            voicedRatio >= VoiceTypeThresholds.MIN_VOICED_RATIO
+
+        // ---- 会话级有效性指标(门限见 VoiceTypeThresholds,COD-45 建议表 #1-#7) ----
+        val t = VoiceTypeThresholds
+        val totalDurationMs = n * FRAME_MS
+        val voicedDurationMs = voiced.size * FRAME_MS
+        val allRms = dspFrames.take(n).map { it.rms }
+        val speechLevel = percentile(allRms, 0.90)
+        val unvoicedRms = (0 until n).filterNot { voicedMask[it] }.map { dspFrames[it].rms }
+        val noiseFloor = if (unvoicedRms.size >= n * t.NOISE_FLOOR_FALLBACK_UNVOICED_FRACTION) {
+            percentile(unvoicedRms, 0.50)
+        } else {
+            percentile(allRms, 0.10)
+        }
+        val activeThreshold = max(t.ACTIVE_FRAME_NOISE_MULT * noiseFloor, t.ACTIVE_FRAME_MIN_RMS)
+        val activeCount = allRms.count { it > activeThreshold }
+        val activeVoicedRatio = if (activeCount > 0) {
+            (voiced.size.toDouble() / activeCount).coerceAtMost(1.0)
+        } else 0.0
+        // 底噪为 0(数字静音)视为信噪无穷大,不因除零误报 TOO_NOISY
+        val levelSnr = if (noiseFloor > 0.0) speechLevel / noiseFloor else Double.POSITIVE_INFINITY
+
+        val usable = totalDurationMs >= t.MIN_TOTAL_DURATION_MS &&
+            voicedDurationMs >= t.MIN_VOICED_DURATION_MS &&
+            activeVoicedRatio >= t.MIN_ACTIVE_VOICED_RATIO &&
+            speechLevel >= t.MIN_SPEECH_LEVEL &&
+            levelSnr >= t.MIN_LEVEL_SNR
+        val failReason = if (usable) null else when {
+            totalDurationMs < t.MIN_TOTAL_DURATION_MS -> SessionFailReason.TOO_SHORT
+            speechLevel < t.SILENT_SPEECH_LEVEL -> SessionFailReason.SILENT
+            speechLevel < t.MIN_SPEECH_LEVEL -> SessionFailReason.TOO_QUIET
+            levelSnr < t.MIN_LEVEL_SNR -> SessionFailReason.TOO_NOISY
+            else -> SessionFailReason.INSUFF_VOICED
+        }
+
         if (!usable) {
-            // 数据不足:仍给出可用统计但标记不可判别,评分判别层据此短路
-            val rmsMean = dspFrames.take(n).map { it.rms }.average()
+            // 数据不足:仍给出电平/底噪/占比等归因指标但标记不可判别,评分判别层据此短路
+            val rmsMean = allRms.average()
             return VoiceFeatures(
                 frameCount = n, voicedFrameCount = voiced.size, voicedRatio = voicedRatio,
                 isUsable = false,
                 f0P10 = 0.0, f0P50 = 0.0, f0P90 = 0.0, f0Cv = 0.0,
                 f1 = 0.0, f2 = 0.0, f3 = 0.0, resonanceSpacing = 0.0,
                 hnrDb = 0.0, tiltDbOct = 0.0, jitterRap = 0.0, shimmerDb = 0.0,
-                rmsMean = if (rmsMean.isFinite()) rmsMean else 0.0
+                rmsMean = if (rmsMean.isFinite()) rmsMean else 0.0,
+                speechLevel = speechLevel,
+                noiseFloor = noiseFloor,
+                activeVoicedRatio = activeVoicedRatio,
+                failReason = failReason
             )
         }
 
@@ -154,7 +225,11 @@ object VoiceFeatureExtractor {
             resonanceSpacing = (f3 - f1) / 3.0,
             hnrDb = hnr, tiltDbOct = tilt,
             jitterRap = jitter, shimmerDb = shimmer,
-            rmsMean = voiced.map { dspFrames[it].rms }.average()
+            rmsMean = voiced.map { dspFrames[it].rms }.average(),
+            speechLevel = speechLevel,
+            noiseFloor = noiseFloor,
+            activeVoicedRatio = activeVoicedRatio,
+            failReason = null
         )
     }
 

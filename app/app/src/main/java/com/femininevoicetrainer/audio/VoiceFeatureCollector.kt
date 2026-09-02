@@ -36,6 +36,8 @@ class VoiceFeatureCollector(
         if (buffer.isEmpty()) return true
 
         val rms = VoiceFeatureExtractor.computeRms(buffer)
+        // 录音中实时电平提示(EMA 平滑在 analyzer 内做,这里只回写本帧原始值)
+        pitchAnalyzer.publishSpeechLevel(rms)
         val f0 = pitchAnalyzer.lastFrameF0
         val hnr = if (f0 > 0.0) {
             VoiceFeatureExtractor.computeHnr(buffer, sampleRate, f0)
