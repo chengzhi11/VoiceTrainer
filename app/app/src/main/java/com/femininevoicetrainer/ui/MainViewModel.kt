@@ -170,13 +170,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (_uiState.value.isRecording) return
         viewModelScope.launch {
             try {
-                // 新一轮开始:清上一轮结果与回放操作
-                _uiState.value = _uiState.value.copy(
-                    isLoading = true,
-                    errorMessage = null,
-                    lastResult = null,
-                    showReplayActions = false
-                )
+                // GH#4 零位移约束:按下瞬间只翻 isLoading(无 UI 布局消费)。
+                // 不在此清空 lastResult / showReplayActions / errorMessage——
+                // 它们驱动按钮下方的 ResultCard/操作行/错误卡,press 期间移除会在
+                // 滚动钳位下整体平移内容,把按钮从手指下顶走(与 GH#4 同根因)。
+                // 旧内容冻结展示,松开后由 stopRecording 统一替换/清理。
+                _uiState.value = _uiState.value.copy(isLoading = true)
 
                 val file = audioRecorder.startRecording()
                 if (file != null) {
@@ -290,8 +289,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /**
      * 「重听」:再放一遍本轮录音,放完继续显示操作
+     * (录音期间拒绝:旧录音回放与麦克风采集并发会互相干扰;操作行在 UI 侧也已置灰)
      */
     fun relistenRecording() {
+        if (_uiState.value.isRecording) return
         val path = _uiState.value.lastResult?.filePath ?: return
         val file = File(path)
         if (!file.exists()) {

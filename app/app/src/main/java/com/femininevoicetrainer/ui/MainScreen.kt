@@ -117,22 +117,20 @@ fun RecordingScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Score Display
-        ScoreCard(
-            score = uiState.currentScore,
-            isRecording = uiState.isRecording
-        )
+        // Score Display(ScoreCard 不依赖 isRecording,固定 100dp)
+        ScoreCard(score = uiState.currentScore)
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // 录音中实时有效性提示(COD-46:电平条 + 有效语音秒数,不让用户录完才发现数据不足)
-        if (uiState.isRecording) {
-            LiveValidityCard(
-                speechLevel = uiState.liveSpeechLevel,
-                voicedSeconds = uiState.liveVoicedSeconds,
-                durationMs = uiState.recordingDuration
-            )
-        }
+        // GH#4:常驻固定高度占位——空闲态置灰、录音态原地填充,按下瞬间零插入,
+        // 按钮上方内容高度与按钮几何不随 isRecording 变化
+        LiveValidityCard(
+            active = uiState.isRecording,
+            speechLevel = uiState.liveSpeechLevel,
+            voicedSeconds = uiState.liveVoicedSeconds,
+            durationMs = uiState.recordingDuration
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -147,15 +145,23 @@ fun RecordingScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // 回放结束后的操作:重新录制 / 重听
+        // GH#4 零位移约束:录音按下瞬间不再移除本行(见 MainViewModel.startRecording),
+        // 录音期间仅置灰禁用,避免旧录音回放与新一轮录音并发
         if (uiState.showReplayActions && uiState.lastResult != null) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedButton(onClick = { viewModel.resetForRerecord() }) {
+                OutlinedButton(
+                    enabled = !uiState.isRecording,
+                    onClick = { viewModel.resetForRerecord() }
+                ) {
                     Text("重新录制")
                 }
-                Button(onClick = { viewModel.relistenRecording() }) {
+                Button(
+                    enabled = !uiState.isRecording,
+                    onClick = { viewModel.relistenRecording() }
+                ) {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
                         contentDescription = null,
@@ -246,12 +252,11 @@ fun F0DisplayCard(
 }
 
 /**
- * 评分显示卡片
+ * 评分显示卡片(固定 100dp;GH#4 排查确认无 isRecording 分支,已移除无用形参)
  */
 @Composable
 fun ScoreCard(
-    score: Double,
-    isRecording: Boolean
+    score: Double
 ) {
     Card(
         modifier = Modifier
@@ -293,13 +298,18 @@ fun ScoreCard(
 }
 
 /**
- * 录音中实时有效性卡(COD-46,人类硬性要求「别让用户录完才知道数据不足」):
+ * 实时有效性卡(COD-46,人类硬性要求「别让用户录完才知道数据不足」):
  * - 声音电平条:0.02(最低可用)/0.04(充足)两档刻度线,低于 0.02 变黄提示偏轻
  * - 有效语音:累计有声秒数进度条,目标 3.0s(与评分门限 MIN_VOICED_DURATION_MS 一致)
  * - 时长:已录秒数对照 3.5s 最低标线(MIN_TOTAL_DURATION_MS)
+ *
+ * GH#4 零位移约束:卡片常驻、固定 160dp 高度(与 F0 卡 120dp / 评分卡 100dp 同一固定高模式)。
+ * 空闲态(active=false)置灰占位并预展示 3.0s/3.5s 目标刻度,录音态原地填充实时值——
+ * 两态行结构一一对应,按下瞬间无任何插入/收起,不改变按钮上方内容高度。
  */
 @Composable
 fun LiveValidityCard(
+    active: Boolean,
     speechLevel: Double,
     voicedSeconds: Double,
     durationMs: Long
@@ -309,14 +319,28 @@ fun LiveValidityCard(
     val levelBarMax = LEVEL_BAR_MAX
     val voicedTargetSec = (VoiceTypeThresholds.MIN_VOICED_DURATION_MS / 1000.0)
     val minDurationSec = (VoiceTypeThresholds.MIN_TOTAL_DURATION_MS / 1000.0)
-    val durationSec = durationMs / 1000.0
-    val levelWarn = speechLevel < minLevel
+    // 空闲态一律按 0 值渲染占位(停录后 StateFlow 保留上一轮尾值,不能带进占位态)
+    val durationSec = if (active) durationMs / 1000.0 else 0.0
+    val voicedSec = if (active) voicedSeconds else 0.0
+    val level = if (active) speechLevel else 0.0
+    val levelWarn = active && speechLevel < minLevel
+
+    val contentColor = when {
+        !active -> MaterialTheme.colorScheme.onSurfaceVariant
+        levelWarn -> MaterialTheme.colorScheme.onErrorContainer
+        else -> MaterialTheme.colorScheme.onSecondaryContainer
+    }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(160.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (levelWarn) MaterialTheme.colorScheme.errorContainer
-            else MaterialTheme.colorScheme.secondaryContainer
+            containerColor = when {
+                !active -> MaterialTheme.colorScheme.surfaceVariant
+                levelWarn -> MaterialTheme.colorScheme.errorContainer
+                else -> MaterialTheme.colorScheme.secondaryContainer
+            }
         )
     ) {
         Column(
@@ -328,24 +352,25 @@ fun LiveValidityCard(
                 text = "录音有效性",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
-                color = if (levelWarn) MaterialTheme.colorScheme.onErrorContainer
-                else MaterialTheme.colorScheme.onSecondaryContainer
+                color = contentColor
             )
 
             Spacer(modifier = Modifier.height(10.dp))
 
             // 声音电平条(0.02/0.04 刻度线;低于 0.02 变黄)
             Text(
-                text = if (levelWarn) "声音偏轻:拿近一点或稍微大声一点"
-                else "声音电平合适",
+                text = when {
+                    !active -> "按住录音后实时检测电平"
+                    levelWarn -> "声音偏轻:拿近一点或稍微大声一点"
+                    else -> "声音电平合适"
+                },
                 style = MaterialTheme.typography.bodySmall,
-                color = if (levelWarn) MaterialTheme.colorScheme.onErrorContainer
-                else MaterialTheme.colorScheme.onSecondaryContainer
+                color = contentColor
             )
             Spacer(modifier = Modifier.height(4.dp))
             Box(modifier = Modifier.fillMaxWidth().height(10.dp)) {
                 LinearProgressIndicator(
-                    progress = (speechLevel / levelBarMax).toFloat().coerceIn(0f, 1f),
+                    progress = (level / levelBarMax).toFloat().coerceIn(0f, 1f),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(10.dp)
@@ -374,13 +399,13 @@ fun LiveValidityCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // 有效语音秒数进度(目标 3.0s)
+            // 有效语音秒数进度(目标 3.0s;空闲态预展示目标,录音前就知道要录够多少)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 LinearProgressIndicator(
-                    progress = (voicedSeconds / voicedTargetSec).toFloat().coerceIn(0f, 1f),
+                    progress = (voicedSec / voicedTargetSec).toFloat().coerceIn(0f, 1f),
                     modifier = Modifier
                         .weight(1f)
                         .height(6.dp)
@@ -388,11 +413,10 @@ fun LiveValidityCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (voicedSeconds >= voicedTargetSec) "有效语音已达标"
-                    else String.format("有效语音 %.1f / %.1f 秒", voicedSeconds, voicedTargetSec),
+                    text = if (voicedSec >= voicedTargetSec) "有效语音已达标"
+                    else String.format("有效语音 %.1f / %.1f 秒", voicedSec, voicedTargetSec),
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (levelWarn) MaterialTheme.colorScheme.onErrorContainer
-                    else MaterialTheme.colorScheme.onSecondaryContainer
+                    color = contentColor
                 )
             }
 
@@ -403,8 +427,7 @@ fun LiveValidityCard(
                 text = if (durationSec >= minDurationSec) String.format("已录 %.1f 秒(时长已足够)", durationSec)
                 else String.format("已录 %.1f 秒(至少 %.1f 秒)", durationSec, minDurationSec),
                 style = MaterialTheme.typography.bodySmall,
-                color = if (levelWarn) MaterialTheme.colorScheme.onErrorContainer
-                else MaterialTheme.colorScheme.onSecondaryContainer
+                color = contentColor
             )
         }
     }
@@ -460,13 +483,13 @@ fun RecordingButton(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Recording duration
-        if (isRecording) {
-            Text(
-                text = formatDuration(recordingDuration),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
+        // GH#4 零位移约束:时长文本常驻(空闲态透明占位 "00:00",仅着色变化),
+        // 按下瞬间不在按钮下方插入 titleLarge 文本,按钮区域几何恒定
+        Text(
+            text = formatDuration(recordingDuration),
+            style = MaterialTheme.typography.titleLarge,
+            color = if (isRecording) MaterialTheme.colorScheme.primary else Color.Transparent
+        )
 
         Spacer(modifier = Modifier.height(8.dp))
 
