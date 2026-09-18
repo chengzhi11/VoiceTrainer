@@ -13,6 +13,7 @@ import java.util.Locale
  *
  * v2:新增五维子分/声线标签/mismatch 列支撑进步曲线与判别展示;
  * score 列存新一轮总分(0-100,五维加权),v1 旧行仍为 0-40 口径。
+ * v3:新增 denoiseApplied 列(GH#5 rescue 降噪重评出分留痕,分析口径标记)。
  */
 @Entity(tableName = "recordings")
 data class Recording(
@@ -30,7 +31,8 @@ data class Recording(
     @ColumnInfo(defaultValue = "0.0") val smoothnessScore: Double = 0.0, // 平滑度 0-8
     @ColumnInfo(defaultValue = "0.0") val mismatch: Double = 0.0, // F0-共鸣错位指标
     val voiceType: String? = null, // 声线标签(气泡音/普通男声/普通女声/萝莉音/御姐音)
-    val voiceCondition: String? = null // 判别四态(自然女声/太监音风险/男声区/过渡区)
+    val voiceCondition: String? = null, // 判别四态(自然女声/太监音风险/男声区/过渡区)
+    @ColumnInfo(defaultValue = "0") val denoiseApplied: Boolean = false // 本轮出分经 rescue 降噪重评(GH#5)
 ) {
     /**
      * 格式化日期字符串

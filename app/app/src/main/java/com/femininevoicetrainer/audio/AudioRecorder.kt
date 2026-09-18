@@ -379,6 +379,28 @@ class AudioRecorder(private val context: Context) {
     }
 
     /**
+     * 读回录音文件 PCM(saveWavFile 写出的 44 字节头 + 16-bit 小端单声道;
+     * 缩放口径与 dispatcher 字节→float 转换一致,int16/32768)。
+     * rescue 降噪重评对整段缓存 PCM 离线处理,供 DenoiseRescue 使用。
+     */
+    fun readRecordingPcm(file: File): FloatArray? {
+        return try {
+            val bytes = file.readBytes()
+            if (bytes.size <= WAV_HEADER_SIZE) return null
+            val n = (bytes.size - WAV_HEADER_SIZE) / 2
+            val pcm = FloatArray(n)
+            val buf = ByteBuffer.wrap(bytes, WAV_HEADER_SIZE, n * 2).order(ByteOrder.LITTLE_ENDIAN)
+            for (i in 0 until n) {
+                pcm[i] = buf.short.toInt() / 32768.0f
+            }
+            pcm
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    /**
      * 播放录音文件
      */
     @RequiresApi(Build.VERSION_CODES.O)

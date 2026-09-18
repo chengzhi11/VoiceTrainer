@@ -362,7 +362,8 @@ fun LiveValidityCard(
                 text = when {
                     !active -> "按住录音后实时检测电平"
                     levelWarn -> "声音偏轻:拿近一点或稍微大声一点"
-                    else -> "声音电平合适"
+                    // GH#5:噪声场景的可操作提示(拒判后 App 会自动降噪重评,录音期先给物理解法)
+                    else -> "电平合适;环境嘈杂时请靠近麦克风、降低背景噪声"
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = contentColor
@@ -960,6 +961,18 @@ fun ResultCard(result: MainViewModel.SessionResult) {
                             )
                         }
 
+                        // GH#5:TOO_NOISY 已跑过降噪重评仍未达标——告知用户降噪已尽力,
+                        // 剩余解法只有靠近麦克风/降低背景噪声(与 advice 呼应)
+                        if (result.denoiseAttempted && fail == VoiceFeatureExtractor.SessionFailReason.TOO_NOISY) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "已自动降噪后重评,仍未达标",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+
                         Spacer(modifier = Modifier.height(6.dp))
 
                         // 量化诊断行:让用户看到差在哪(有效语音秒数/电平)
@@ -1011,6 +1024,21 @@ fun ResultCard(result: MainViewModel.SessionResult) {
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+
+                    // GH#5 rescue 翻盘出分:评分来自降噪后信号,提示分析口径(回放仍是原始录音)
+                    if (result.denoiseApplied) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer
+                        ) {
+                            Text(
+                                text = "已降噪分析",
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))

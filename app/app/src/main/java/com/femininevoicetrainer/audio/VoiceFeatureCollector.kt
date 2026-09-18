@@ -17,10 +17,46 @@ class VoiceFeatureCollector(
     private val pitchAnalyzer: PitchAnalyzer
 ) : AudioProcessor {
 
-    private val frames = ArrayList<FrameDsp>()
+    companion object {
+        /**
+         * 单帧 DSP 标量特征(RMS/HNR/共振峰/谱倾斜)。
+         * 实时链路(process)与 rescue 离线重评链路(OfflinePcmAnalyzer)共用本实现,
+         * 保证同一 PCM 走两条链路得到逐位一致的特征——勿在任一侧另写一份。
+         *
+         * @param f0 本帧 YIN 检出的带内 F0(未检出传 0;HNR 仅在有 F0 时计算)
+         */
+        fun computeFrameDsp(buffer: FloatArray, sampleRate: Int, f0: Double): FrameDsp {
+            val rms = VoiceFeatureExtractor.computeRms(buffer)
+            val hnr = if (f0 > 0.0) {
+                VoiceFeatureExtractor.computeHnr(buffer, sampleRate, f0)
+            } else Double.NaN
 
-    // 复用缓冲(仅 dispatcher 消费线程访问,无并发写)
-    private var window: DoubleArray? = null
+            // 降采样 → 加窗 → 谱倾斜(LPC 用预加重版,倾斜用未预加重版)
+            val down = VoiceFeatureExtractor.decimate(buffer, sampleRate, VoiceFeatureExtractor.DECIMATION_FACTOR)
+            val w = VoiceFeatureExtractor.hammingWindow(down.size)
+            val windowed = DoubleArray(down.size) { down[it] * w[it] }
+            val tilt = VoiceFeatureExtractor.computeSpectralTilt(windowed, sampleRate / VoiceFeatureExtractor.DECIMATION_FACTOR)
+
+            // 共振峰:LPC 主方案,失败回退 FFT 谱包络峰值法(前期信号处理调研定稿的两级提取方案)
+            val preemph = VoiceFeatureExtractor.preEmphasis(windowed)
+            val formants = VoiceFeatureExtractor.computeFormantsLpc(preemph, sampleRate / VoiceFeatureExtractor.DECIMATION_FACTOR)
+                ?: VoiceFeatureExtractor.computeFormantsFft(
+                    windowed,
+                    sampleRate / VoiceFeatureExtractor.DECIMATION_FACTOR
+                ) ?: listOf(Double.NaN, Double.NaN, Double.NaN)
+
+            return FrameDsp(
+                rms = rms,
+                hnrDb = hnr,
+                f1 = formants.getOrElse(0) { Double.NaN },
+                f2 = formants.getOrElse(1) { Double.NaN },
+                f3 = formants.getOrElse(2) { Double.NaN },
+                tiltDbOct = tilt
+            )
+        }
+    }
+
+    private val frames = ArrayList<FrameDsp>()
 
     /** 会话帧数 */
     val frameCount: Int get() = synchronized(frames) { frames.size }
@@ -35,52 +71,15 @@ class VoiceFeatureCollector(
         val buffer = audioEvent.floatBuffer
         if (buffer.isEmpty()) return true
 
-        val rms = VoiceFeatureExtractor.computeRms(buffer)
         // 录音中实时电平提示(EMA 平滑在 analyzer 内做,这里只回写本帧原始值)
-        pitchAnalyzer.publishSpeechLevel(rms)
-        val f0 = pitchAnalyzer.lastFrameF0
-        val hnr = if (f0 > 0.0) {
-            VoiceFeatureExtractor.computeHnr(buffer, sampleRate, f0)
-        } else Double.NaN
+        pitchAnalyzer.publishSpeechLevel(VoiceFeatureExtractor.computeRms(buffer))
 
-        // 降采样 → 加窗 → 谱倾斜(LPC 用预加重版,倾斜用未预加重版)
-        val down = VoiceFeatureExtractor.decimate(buffer, sampleRate, VoiceFeatureExtractor.DECIMATION_FACTOR)
-        val w = windowFor(down.size)
-        val windowed = DoubleArray(down.size) { down[it] * w[it] }
-        val tilt = VoiceFeatureExtractor.computeSpectralTilt(windowed, sampleRate / VoiceFeatureExtractor.DECIMATION_FACTOR)
-
-        // 共振峰:LPC 主方案,失败回退 FFT 谱包络峰值法(前期信号处理调研定稿的两级提取方案)
-        val preemph = VoiceFeatureExtractor.preEmphasis(windowed)
-        val formants = VoiceFeatureExtractor.computeFormantsLpc(preemph, sampleRate / VoiceFeatureExtractor.DECIMATION_FACTOR)
-            ?: VoiceFeatureExtractor.computeFormantsFft(
-                windowed,
-                sampleRate / VoiceFeatureExtractor.DECIMATION_FACTOR
-            ) ?: listOf(Double.NaN, Double.NaN, Double.NaN)
-
-        synchronized(frames) {
-            frames.add(
-                FrameDsp(
-                    rms = rms,
-                    hnrDb = hnr,
-                    f1 = formants.getOrElse(0) { Double.NaN },
-                    f2 = formants.getOrElse(1) { Double.NaN },
-                    f3 = formants.getOrElse(2) { Double.NaN },
-                    tiltDbOct = tilt
-                )
-            )
-        }
+        val frame = computeFrameDsp(buffer, sampleRate, pitchAnalyzer.lastFrameF0)
+        synchronized(frames) { frames.add(frame) }
         return true
     }
 
     override fun processingFinished() {
         // dispatcher 停止时无需额外清理
-    }
-
-    private fun windowFor(n: Int): DoubleArray {
-        val existing = window
-        if (existing != null && existing.size == n) return existing
-        val created = VoiceFeatureExtractor.hammingWindow(n)
-        window = created
-        return created
     }
 }

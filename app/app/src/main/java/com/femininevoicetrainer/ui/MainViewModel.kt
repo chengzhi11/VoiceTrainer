@@ -4,13 +4,16 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.femininevoicetrainer.audio.AudioRecorder
+import com.femininevoicetrainer.audio.DenoiseRescue
 import com.femininevoicetrainer.audio.PitchAnalyzer
 import com.femininevoicetrainer.audio.ScoringAlgorithm
 import com.femininevoicetrainer.audio.VoiceEvaluator
 import com.femininevoicetrainer.audio.VoiceFeatureExtractor
 import com.femininevoicetrainer.data.AppDatabase
 import com.femininevoicetrainer.data.Recording
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -83,13 +86,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     )
 
     /**
-     * 一轮录音的评估结果(特征聚合 + 判别)
+     * 一轮录音的评估结果(特征聚合 + 判别)。
+     * denoiseAttempted:第一 pass 拒判 TOO_NOISY 后跑过降噪重评;
+     * denoiseApplied:重评翻盘出分(评分来自降噪后信号,UI 提示「已降噪分析」)。
      */
     data class SessionResult(
         val evaluation: VoiceEvaluator.VoiceEvaluation,
         val features: VoiceFeatureExtractor.VoiceFeatures,
         val filePath: String,
-        val durationMs: Long
+        val durationMs: Long,
+        val denoiseAttempted: Boolean = false,
+        val denoiseApplied: Boolean = false
     )
 
     companion object {
@@ -220,14 +227,34 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     // 会话级特征聚合(置信度>0.7 过滤,防环境噪声拉低统计的系统性解法)
                     val pitchAnalyzer = audioRecorder.getPitchAnalyzer()
                     val collector = audioRecorder.getVoiceFeatureCollector()
-                    val features = VoiceFeatureExtractor.analyze(
+                    var features = VoiceFeatureExtractor.analyze(
                         collector?.snapshot() ?: emptyList(),
                         pitchAnalyzer.getRawF0Series(),
                         pitchAnalyzer.getRawProbabilitySeries()
                     )
-                    val evaluation = VoiceEvaluator.evaluate(features)
+                    var evaluation = VoiceEvaluator.evaluate(features)
 
-                    // 入库(五维子分/声线标签/判别结果,migration v2)
+                    // rescue-on-TOO_NOISY 两 pass(GH#5):拒判「环境噪声大」且电平达标时,
+                    // 对整段 PCM 降噪(HPF@120Hz+谱减)后重跑同一判据重评;翻盘则出分并留痕。
+                    // 门限零改动,干净会话(第一 pass 即可用)不过链,零漂移零回归。
+                    var denoiseAttempted = false
+                    var denoiseApplied = false
+                    if (DenoiseRescue.shouldRescue(features)) {
+                        val rescued = withContext(Dispatchers.Default) {
+                            val pcm = audioRecorder.readRecordingPcm(file)
+                            if (pcm == null) null else {
+                                denoiseAttempted = true
+                                DenoiseRescue.rescue(pcm)
+                            }
+                        }
+                        if (rescued != null && rescued.isUsable) {
+                            features = rescued
+                            evaluation = VoiceEvaluator.evaluate(rescued)
+                            denoiseApplied = true
+                        }
+                    }
+
+                    // 入库(五维子分/声线标签/判别结果,migration v2;denoiseApplied 留痕 v3)
                     val recording = Recording(
                         filePath = file.absolutePath,
                         duration = durationMs,
@@ -242,7 +269,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         voiceType = evaluation.voiceType?.label,
                         // 数据不足行带上失败归因(录音太短/声音太轻/…),回环回归与历史排查可直接读因
                         voiceCondition = evaluation.condition.label +
-                            (features.failReason?.let { "(${it.label})" } ?: "")
+                            (features.failReason?.let { "(${it.label})" } ?: ""),
+                        denoiseApplied = denoiseApplied
                     )
                     recordingDao.insert(recording)
                     loadRecordings()
@@ -251,7 +279,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         errorMessage = null,
                         currentF0 = 0.0,
                         currentScore = 0.0,
-                        lastResult = SessionResult(evaluation, features, file.absolutePath, durationMs),
+                        lastResult = SessionResult(
+                            evaluation, features, file.absolutePath, durationMs,
+                            denoiseAttempted, denoiseApplied
+                        ),
                         showReplayActions = false
                     )
 

@@ -13,7 +13,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  */
 @Database(
     entities = [Recording::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -46,6 +46,15 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         /**
+         * v2 → v3(GH#5 降噪 rescue):denoiseApplied 留痕列,历史数据保留
+         */
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE recordings ADD COLUMN denoiseApplied INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        /**
          * 单例实例
          */
         @Volatile
@@ -62,8 +71,8 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     DATABASE_NAME
                 )
-                    // 优先走正式迁移(v1→v2),缺失路径才兜底重建
-                    .addMigrations(MIGRATION_1_2)
+                    // 优先走正式迁移(v1→v2→v3),缺失路径才兜底重建
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .fallbackToDestructiveMigration()
                     .build()
 
